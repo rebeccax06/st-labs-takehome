@@ -1,0 +1,13 @@
+{
+  "applications": [
+    {
+      "app_id": "TEST-A-WARN",
+      "name": "Odd App",
+      "app_type": "hybrid",
+      "sso_enabled": "perhaps"
+    }
+  ],
+  "summary": {
+    "total_apps": 99
+  }
+}

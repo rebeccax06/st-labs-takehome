@@ -1,0 +1,29 @@
+[
+  {
+    "user_id": "TEST-U-001",
+    "name": "Test User",
+    "email": "TEST.USER@example.test",
+    "mfa_enabled": false,
+    "status": "SUSPENDED",
+    "groups": [
+      "Engineering",
+      "Security"
+    ],
+    "apps": [
+      "Test Portal",
+      "Missing App"
+    ]
+  },
+  {
+    "user_id": "TEST-U-002",
+    "name": "Zoë 李",
+    "mfa_enabled": true,
+    "groups": [],
+    "apps": []
+  },
+  {
+    "user_id": "TEST-U-003",
+    "name": "Unknown MFA",
+    "mfa_enabled": null
+  }
+]

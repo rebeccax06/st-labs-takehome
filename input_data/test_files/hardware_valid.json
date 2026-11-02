@@ -1,0 +1,19 @@
+[
+  {
+    "device_id": "TEST-D-001",
+    "hostname": "test-laptop",
+    "os": "Windows 11",
+    "ip_address": "192.0.2.10",
+    "mac_address": "aa-bb-cc-dd-ee-ff",
+    "assigned_to": "Test User",
+    "encryption_status": false,
+    "last_checkin": "2026-10-30T10:00:00-04:00"
+  },
+  {
+    "device_id": 42,
+    "hostname": "東京-💻",
+    "os": "Ubuntu 24.04",
+    "ip_address": "2001:0db8::1",
+    "status": "ACTIVE"
+  }
+]

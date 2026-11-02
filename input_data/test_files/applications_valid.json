@@ -1,0 +1,30 @@
+{
+  "inventory_metadata": {
+    "export_date": "2026-10-30T00:00:00Z",
+    "total_applications": 2
+  },
+  "applications": [
+    {
+      "app_id": "TEST-A-001",
+      "name": "Test Portal",
+      "app_type": "SaaS",
+      "users_count": 0,
+      "sso_enabled": false,
+      "owner": "Test Team",
+      "integrations": [
+        "Test Database",
+        "Missing App"
+      ]
+    },
+    {
+      "app_id": "TEST-A-002",
+      "name": "Test Database",
+      "app_type": "on-prem",
+      "users_count": 5,
+      "sso_enabled": true
+    }
+  ],
+  "summary": {
+    "total_apps": 2
+  }
+}

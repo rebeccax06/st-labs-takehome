@@ -1,0 +1,9 @@
+{
+  "applications": [
+    {
+      "app_id": "TEST-BAD",
+      "name": "Bad Count",
+      "users_count": "10"
+    }
+  ]
+}

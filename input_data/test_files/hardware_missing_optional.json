@@ -1,0 +1,11 @@
+[
+  {
+    "device_id": "TEST-MIN-001"
+  },
+  {
+    "device_id": "TEST-MIN-002",
+    "hostname": "  ",
+    "ip_address": null,
+    "encryption_status": ""
+  }
+]

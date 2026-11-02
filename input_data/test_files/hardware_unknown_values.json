@@ -1,0 +1,9 @@
+[
+  {
+    "device_id": "TEST-UNKNOWN",
+    "hostname": "unknown",
+    "os": "Plan9",
+    "status": "repairing",
+    "encryption_status": "maybe"
+  }
+]

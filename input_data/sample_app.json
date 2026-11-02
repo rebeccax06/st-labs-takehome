@@ -1,0 +1,103 @@
+{
+  "inventory_metadata": {
+    "export_date": "2024-07-21T00:00:00Z",
+    "source": "Example SaaS Management Platform",
+    "export_type": "Application Inventory Report",
+    "total_applications": 6,
+    "organization": "Example Corp"
+  },
+  "applications": [
+    {
+      "app_id": "APP-001",
+      "name": "Slack",
+      "vendor": "Salesforce Inc.",
+      "app_type": "SaaS",
+      "category": "Collaboration",
+      "deployment": "cloud",
+      "owner": "IT Operations",
+      "users_count": 52,
+      "integrations": ["GitHub", "Jira", "Google Drive", "Zoom"],
+      "sso_enabled": true,
+      "contract_renewal": "2025-03-15",
+      "annual_cost_usd": 24000
+    },
+    {
+      "app_id": "APP-002",
+      "name": "GitHub Enterprise",
+      "vendor": "GitHub Inc.",
+      "app_type": "SaaS",
+      "category": "Development",
+      "deployment": "cloud-hosted",
+      "owner": "Engineering Team",
+      "users_count": 28,
+      "integrations": ["Slack", "Jira"],
+      "sso_enabled": true,
+      "contract_renewal": "2025-06-01",
+      "annual_cost_usd": 18000
+    },
+    {
+      "app_id": "APP-003",
+      "name": "Salesforce CRM",
+      "vendor": "Salesforce",
+      "app_type": "SaaS",
+      "category": "Sales",
+      "deployment": "cloud",
+      "owner": "Sales Team",
+      "users_count": 35,
+      "integrations": ["Slack", "LinkedIn Sales Navigator", "DocuSign"],
+      "sso_enabled": true,
+      "contract_renewal": "2025-01-20",
+      "annual_cost_usd": 45000
+    },
+    {
+      "app_id": "APP-004",
+      "name": "Internal HR Portal",
+      "vendor": "Custom Built",
+      "app_type": "on-premise",
+      "category": "HR",
+      "deployment": "on-prem",
+      "owner": "HR Team",
+      "users_count": 55,
+      "integrations": ["Active Directory", "Payroll System"],
+      "sso_enabled": false,
+      "server_location": "On-Premise Data Center",
+      "maintenance_contact": "IT Infrastructure"
+    },
+    {
+      "app_id": "APP-005",
+      "name": "PostgreSQL Database",
+      "vendor": "PostgreSQL Global Development Group",
+      "app_type": "on-premise",
+      "category": "Database",
+      "deployment": "self-hosted",
+      "owner": "Database Team",
+      "users_count": 15,
+      "integrations": ["Backend API", "Analytics Platform"],
+      "sso_enabled": false,
+      "server_location": "AWS us-east-1",
+      "version": "14.5"
+    },
+    {
+      "app_id": "APP-006",
+      "name": "Jenkins CI/CD",
+      "vendor": "Open Source",
+      "app_type": "on-premise",
+      "category": "Development",
+      "deployment": "self-hosted",
+      "owner": "DevOps Team",
+      "users_count": 20,
+      "integrations": ["GitHub", "Docker", "Kubernetes"],
+      "sso_enabled": true,
+      "server_location": "AWS us-east-1",
+      "version": "2.401.1"
+    }
+  ],
+  "summary": {
+    "total_apps": 6,
+    "saas_apps": 3,
+    "on_premise_apps": 3,
+    "total_annual_cost": 87000,
+    "apps_with_sso": 4,
+    "apps_without_sso": 2
+  }
+}

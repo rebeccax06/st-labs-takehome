@@ -1,0 +1,92 @@
+[
+  {
+    "user_id": "u_999",
+    "name": "John Doe",
+    "email": "john.d@example.com",
+    "groups": ["Engineering"],
+    "apps": ["GitHub", "Slack"],
+    "mfa_enabled": true,
+    "last_login": "2024-07-22T09:15:00Z",
+    "status": "ACTIVE"
+  },
+  {
+    "user_id": "u_110",
+    "name": "Jane Doe",
+    "email": "jane.d@example.com",
+    "groups": ["Engineering", "Admins"],
+    "apps": ["GitHub", "Slack", "Salesforce"],
+    "mfa_enabled": true,
+    "last_login": "2024-07-15T10:03:00Z",
+    "status": "ACTIVE"
+  },
+  {
+    "user_id": "u_235",
+    "name": "Carlos S.",
+    "email": "c.santos@example.com",
+    "groups": ["HR"],
+    "apps": ["Workday"],
+    "mfa_enabled": false,
+    "last_login": "2024-06-21T08:41:00Z",
+    "status": "ACTIVE"
+  },
+  {
+    "user_id": "u_301",
+    "name": "Sarah Chen",
+    "email": "s.chen@example.com",
+    "groups": ["Engineering", "DevOps"],
+    "apps": ["GitHub", "AWS Console", "DataDog", "PagerDuty"],
+    "mfa_enabled": true,
+    "last_login": "2024-07-20T14:22:00Z",
+    "status": "ACTIVE"
+  },
+  {
+    "user_id": "u_412",
+    "name": "Robert Martinez",
+    "email": "r.martinez@example.com",
+    "groups": ["Sales"],
+    "apps": ["Salesforce", "Slack", "Zoom"],
+    "mfa_enabled": true,
+    "last_login": "2024-07-19T16:45:00Z",
+    "status": "ACTIVE"
+  },
+  {
+    "user_id": "u_523",
+    "name": "Emma Wilson",
+    "email": "e.wilson@example.com",
+    "groups": ["Design", "Marketing"],
+    "apps": ["Figma", "Slack", "Adobe Creative Cloud"],
+    "mfa_enabled": true,
+    "last_login": "2024-07-20T11:30:00Z",
+    "status": "ACTIVE"
+  },
+  {
+    "user_id": "u_634",
+    "name": "Michael Brown",
+    "email": "m.brown@example.com",
+    "groups": ["Finance"],
+    "apps": ["QuickBooks", "Expensify", "Slack"],
+    "mfa_enabled": false,
+    "last_login": "2024-07-18T09:15:00Z",
+    "status": "ACTIVE"
+  },
+  {
+    "user_id": "u_745",
+    "name": "Lisa Park",
+    "email": "l.park@example.com",
+    "groups": ["Engineering", "Security"],
+    "apps": ["GitHub", "Wiz", "Okta Admin", "1Password"],
+    "mfa_enabled": true,
+    "last_login": "2024-07-20T23:50:00Z",
+    "status": "ACTIVE"
+  },
+  {
+    "user_id": "u_856",
+    "name": "Alex Johnson",
+    "email": "a.johnson.contractor@example.com",
+    "groups": ["Contractors", "Engineering"],
+    "apps": ["GitHub", "Slack"],
+    "mfa_enabled": false,
+    "last_login": "2024-05-28T17:30:00Z",
+    "status": "SUSPENDED"
+  }
+]

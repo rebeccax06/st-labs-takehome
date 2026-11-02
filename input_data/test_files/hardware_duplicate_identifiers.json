@@ -1,0 +1,10 @@
+[
+  {
+    "device_id": "TEST-DUP",
+    "hostname": "before"
+  },
+  {
+    "device_id": "TEST-DUP",
+    "hostname": "after"
+  }
+]

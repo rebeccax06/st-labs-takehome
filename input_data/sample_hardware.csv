@@ -1,0 +1,4 @@
+device_id,hostname,assigned_to,os,ip_address,mac_address,last_checkin,location,encryption_status,status,device_type,serial_number,department
+C-19283,laptop-jdoe,John D.,macOS Ventura,10.10.22.5,AA:BB:CC:DD:11:22,2024-07-22T10:00:00Z,London,FileVault Enabled,active,laptop,LAP-JD-20230615,Engineering
+D-10005,laptop-devops,Sarah Chen,Ubuntu 22.04 LTS,10.10.22.45,F0:DE:F1:12:34:56,2024-07-20T22:40:00Z,San Francisco Office,LUKS Full Disk Encryption,active,laptop,LAP-ENG-20230420,Engineering
+HW-2024-003,macbook-cto-01,Jane Doe,macOS Sonoma 14.5,10.10.22.100,8C:85:90:AA:BB:CC,2024-07-21T09:30:00Z,New York HQ - Floor 15,FileVault 2,active,laptop,MBA-EXEC-20231215,Executive

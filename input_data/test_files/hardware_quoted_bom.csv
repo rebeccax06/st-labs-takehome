@@ -1,0 +1,3 @@
+﻿device_id,hostname,location,encryption_status
+TEST-CSV-1,"test,""quoted""","Floor 1, East
+Desk 2",false

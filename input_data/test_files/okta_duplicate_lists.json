@@ -1,0 +1,13 @@
+[
+  {
+    "user_id": "TEST-U-DUP",
+    "groups": [
+      "IT",
+      "IT"
+    ],
+    "apps": [
+      "Test Portal",
+      "Test Portal"
+    ]
+  }
+]

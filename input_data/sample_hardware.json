@@ -1,0 +1,28 @@
+[
+  {
+    "device_id": "C-19283",
+    "hostname": "laptop-jdoe",
+    "assigned_to": "John D.",
+    "os": "macos",
+    "ip_address": "10.10.22.5",
+    "last_checkin": "2024-06-12T14:30:00Z",
+    "location": "New York HQ",
+    "status": "active"
+  },
+  {
+    "device_id": "D-10005",
+    "hostname": "laptop-devops",
+    "assigned_to": "Sarah Chen",
+    "os": "Ubuntu 22",
+    "ip_address": "10.10.22.45",
+    "status": "active"
+  },
+  {
+    "device_id": "HW-2024-003",
+    "hostname": "macbook-cto-01",
+    "assigned_to": "Jane Doe",
+    "os": "macOS",
+    "location": "New York HQ",
+    "status": "inactive"
+  }
+]

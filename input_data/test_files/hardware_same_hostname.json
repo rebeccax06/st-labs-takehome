@@ -1,0 +1,10 @@
+[
+  {
+    "device_id": "TEST-DISTINCT-1",
+    "hostname": "shared-host"
+  },
+  {
+    "device_id": "TEST-DISTINCT-2",
+    "hostname": "shared-host"
+  }
+]

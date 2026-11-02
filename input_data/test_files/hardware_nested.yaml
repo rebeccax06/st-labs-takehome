@@ -1,0 +1,17 @@
+inventory:
+  metadata:
+    export_date: "2026-10-30T12:00:00Z"
+    total_devices: 1
+  devices:
+    - device_id: TEST-Y-001
+      hostname: test-nested
+      hardware:
+        serial_number: TEST-SERIAL-001
+      network:
+        primary_ip: "2001:db8::5"
+      security:
+        encryption_enabled: false
+      assigned_to:
+        employee_id: TEST-E-001
+        name: Test User
+        email: test.user@example.test

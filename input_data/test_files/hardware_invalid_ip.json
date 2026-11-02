@@ -1,0 +1,7 @@
+[
+  {
+    "device_id": "TEST-BAD",
+    "hostname": "test-bad",
+    "ip_address": "999.2.3.4"
+  }
+]

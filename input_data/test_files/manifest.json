@@ -1,0 +1,527 @@
+[
+  {
+    "file": "hardware_valid.json",
+    "source_id": "hardware-json",
+    "format": "json",
+    "purpose": "IPv4/IPv6, MAC normalization, Unicode, numeric ID, timezone, explicit false",
+    "expected": "accepted",
+    "records": 2,
+    "warning_count": 0,
+    "warning_codes": []
+  },
+  {
+    "file": "hardware_missing_optional.json",
+    "source_id": "hardware-json",
+    "format": "json",
+    "purpose": "Absent, null, and blank optional fields",
+    "expected": "accepted",
+    "records": 2,
+    "warning_count": 0,
+    "warning_codes": []
+  },
+  {
+    "file": "hardware_unknown_values.json",
+    "source_id": "hardware-json",
+    "format": "json",
+    "purpose": "Unknown OS/status/encryption produce preserved unknowns and warnings",
+    "expected": "accepted",
+    "records": 1,
+    "warning_count": 2,
+    "warning_codes": [
+      "unknown_boolean",
+      "unknown_status"
+    ]
+  },
+  {
+    "file": "hardware_duplicate_identifiers.json",
+    "source_id": "hardware-json",
+    "format": "json",
+    "purpose": "Same identity with contradictory attributes; inspect persisted conflict evidence",
+    "expected": "accepted",
+    "records": 2,
+    "warning_count": 0,
+    "warning_codes": []
+  },
+  {
+    "file": "hardware_same_hostname.json",
+    "source_id": "hardware-json",
+    "format": "json",
+    "purpose": "Distinct IDs must not merge solely on hostname",
+    "expected": "accepted",
+    "records": 2,
+    "warning_count": 0,
+    "warning_codes": []
+  },
+  {
+    "file": "hardware_unresolved_assignee.json",
+    "source_id": "hardware-json",
+    "format": "json",
+    "purpose": "Name-only assignee may remain unresolved",
+    "expected": "accepted",
+    "records": 1,
+    "warning_count": 0,
+    "warning_codes": []
+  },
+  {
+    "file": "hardware_invalid_ip.json",
+    "source_id": "hardware-json",
+    "format": "json",
+    "purpose": "invalid_ip",
+    "expected": "rejected",
+    "error_code": "invalid_input",
+    "error": "Invalid IP address",
+    "error_path": "/0/ip_address"
+  },
+  {
+    "file": "hardware_invalid_mac.json",
+    "source_id": "hardware-json",
+    "format": "json",
+    "purpose": "invalid_mac",
+    "expected": "rejected",
+    "error_code": "invalid_input",
+    "error": "Invalid MAC address",
+    "error_path": "/0/mac_address"
+  },
+  {
+    "file": "hardware_timestamp_no_timezone.json",
+    "source_id": "hardware-json",
+    "format": "json",
+    "purpose": "timestamp_no_timezone",
+    "expected": "rejected",
+    "error_code": "invalid_input",
+    "error": "Expected an ISO 8601 timestamp with timezone",
+    "error_path": "/0/last_checkin"
+  },
+  {
+    "file": "hardware_invalid_timestamp.json",
+    "source_id": "hardware-json",
+    "format": "json",
+    "purpose": "invalid_timestamp",
+    "expected": "rejected",
+    "error_code": "invalid_input",
+    "error": "Expected an ISO 8601 timestamp with timezone",
+    "error_path": "/0/last_checkin"
+  },
+  {
+    "file": "hardware_numeric_boolean.json",
+    "source_id": "hardware-json",
+    "format": "json",
+    "purpose": "numeric_boolean",
+    "expected": "rejected",
+    "error_code": "invalid_input",
+    "error": "Expected a boolean or boolean description",
+    "error_path": "/0/encryption_status"
+  },
+  {
+    "file": "hardware_wrong_hostname_type.json",
+    "source_id": "hardware-json",
+    "format": "json",
+    "purpose": "wrong_hostname_type",
+    "expected": "rejected",
+    "error_code": "invalid_input",
+    "error": "Expected a string",
+    "error_path": "/0/hostname"
+  },
+  {
+    "file": "hardware_boolean_id.json",
+    "source_id": "hardware-json",
+    "format": "json",
+    "purpose": "boolean_id",
+    "expected": "rejected",
+    "error_code": "invalid_input",
+    "error": "Expected a string",
+    "error_path": "/0/device_id"
+  },
+  {
+    "file": "hardware_wrong_root.json",
+    "source_id": "hardware-json",
+    "format": "json",
+    "purpose": "Object instead of required array",
+    "expected": "rejected",
+    "error_code": "invalid_input",
+    "error": "Expected an array",
+    "error_path": ""
+  },
+  {
+    "file": "hardware_nonobject_row.json",
+    "source_id": "hardware-json",
+    "format": "json",
+    "purpose": "Invalid row after valid row; upload should fail atomically",
+    "expected": "rejected",
+    "error_code": "invalid_input",
+    "error": "Expected an object",
+    "error_path": "/1"
+  },
+  {
+    "file": "hardware_empty.json",
+    "source_id": "hardware-json",
+    "format": "json",
+    "purpose": "Empty array rejected by normalized batch validation",
+    "expected": "rejected",
+    "error_code": "invalid_input",
+    "error": "Record does not satisfy the normalized schema",
+    "error_path": "/records"
+  },
+  {
+    "file": "okta_valid.json",
+    "source_id": "okta-export",
+    "format": "json",
+    "purpose": "False/true/unknown MFA, suspended users, Unicode, empty lists, unresolved app",
+    "expected": "accepted",
+    "records": 3,
+    "warning_count": 0,
+    "warning_codes": []
+  },
+  {
+    "file": "okta_duplicate_lists.json",
+    "source_id": "okta-export",
+    "format": "json",
+    "purpose": "Duplicate group/access assertions",
+    "expected": "accepted",
+    "records": 1,
+    "warning_count": 0,
+    "warning_codes": []
+  },
+  {
+    "file": "okta_groups_scalar.json",
+    "source_id": "okta-export",
+    "format": "json",
+    "purpose": "groups_scalar",
+    "expected": "rejected",
+    "error_code": "invalid_input",
+    "error": "Expected an array of strings",
+    "error_path": "/0/groups"
+  },
+  {
+    "file": "okta_blank_app.json",
+    "source_id": "okta-export",
+    "format": "json",
+    "purpose": "blank_app",
+    "expected": "rejected",
+    "error_code": "invalid_input",
+    "error": "References and group names must not be blank",
+    "error_path": "/0/apps/0"
+  },
+  {
+    "file": "okta_numeric_mfa.json",
+    "source_id": "okta-export",
+    "format": "json",
+    "purpose": "numeric_mfa",
+    "expected": "rejected",
+    "error_code": "invalid_input",
+    "error": "Expected a boolean or boolean description",
+    "error_path": "/0/mfa_enabled"
+  },
+  {
+    "file": "okta_invalid_login.json",
+    "source_id": "okta-export",
+    "format": "json",
+    "purpose": "invalid_login",
+    "expected": "rejected",
+    "error_code": "invalid_input",
+    "error": "Expected an ISO 8601 timestamp with timezone",
+    "error_path": "/0/last_login"
+  },
+  {
+    "file": "applications_valid.json",
+    "source_id": "application-inventory",
+    "format": "json",
+    "purpose": "Zero users, boolean false, integration references and trusted snapshot",
+    "expected": "accepted",
+    "records": 2,
+    "warning_count": 0,
+    "warning_codes": []
+  },
+  {
+    "file": "applications_warnings.json",
+    "source_id": "application-inventory",
+    "format": "json",
+    "purpose": "Count mismatch and unknown enum/boolean warnings",
+    "expected": "accepted",
+    "records": 1,
+    "warning_count": 4,
+    "warning_codes": [
+      "count_mismatch",
+      "missing_snapshot_time",
+      "unknown_app_type",
+      "unknown_boolean"
+    ]
+  },
+  {
+    "file": "applications_negative_count.json",
+    "source_id": "application-inventory",
+    "format": "json",
+    "purpose": "Reject invalid user count",
+    "expected": "rejected",
+    "error_code": "invalid_input",
+    "error": "Expected a nonnegative integer user count",
+    "error_path": "/applications/0/users_count"
+  },
+  {
+    "file": "applications_fractional_count.json",
+    "source_id": "application-inventory",
+    "format": "json",
+    "purpose": "Reject invalid user count",
+    "expected": "rejected",
+    "error_code": "invalid_input",
+    "error": "Expected a nonnegative integer user count",
+    "error_path": "/applications/0/users_count"
+  },
+  {
+    "file": "applications_string_count.json",
+    "source_id": "application-inventory",
+    "format": "json",
+    "purpose": "Reject invalid user count",
+    "expected": "rejected",
+    "error_code": "invalid_input",
+    "error": "Expected a nonnegative integer user count",
+    "error_path": "/applications/0/users_count"
+  },
+  {
+    "file": "applications_boolean_count.json",
+    "source_id": "application-inventory",
+    "format": "json",
+    "purpose": "Reject invalid user count",
+    "expected": "rejected",
+    "error_code": "invalid_input",
+    "error": "Expected a nonnegative integer user count",
+    "error_path": "/applications/0/users_count"
+  },
+  {
+    "file": "hardware_nested.yaml",
+    "source_id": "hardware-yaml",
+    "format": "yaml",
+    "purpose": "Nested device plus embedded user; serial/email identity and snapshot",
+    "expected": "accepted",
+    "records": 2,
+    "warning_count": 0,
+    "warning_codes": []
+  },
+  {
+    "file": "yaml_duplicate_key.yaml",
+    "source_id": "hardware-yaml",
+    "format": "yaml",
+    "purpose": "Duplicate YAML keys",
+    "expected": "rejected",
+    "error_code": "invalid_input",
+    "error": "Duplicate mapping key",
+    "error_path": "/"
+  },
+  {
+    "file": "yaml_alias.yaml",
+    "source_id": "hardware-yaml",
+    "format": "yaml",
+    "purpose": "Reject YAML aliases",
+    "expected": "rejected",
+    "error_code": "invalid_input",
+    "error": "YAML aliases are not supported",
+    "error_path": "/"
+  },
+  {
+    "file": "yaml_unsafe_tag.yaml",
+    "source_id": "hardware-yaml",
+    "format": "yaml",
+    "purpose": "Reject non-safe YAML tags",
+    "expected": "rejected",
+    "error_code": "invalid_input",
+    "error": "Malformed input document",
+    "error_path": "/"
+  },
+  {
+    "file": "json_duplicate_key.json",
+    "source_id": "hardware-json",
+    "format": "json",
+    "purpose": "Duplicate JSON keys",
+    "expected": "rejected",
+    "error_code": "invalid_input",
+    "error": "Duplicate mapping key",
+    "error_path": "/"
+  },
+  {
+    "file": "json_truncated.json",
+    "source_id": "hardware-json",
+    "format": "json",
+    "purpose": "Malformed/truncated JSON",
+    "expected": "rejected",
+    "error_code": "invalid_input",
+    "error": "Malformed input document",
+    "error_path": "/"
+  },
+  {
+    "file": "json_nonfinite.json",
+    "source_id": "hardware-json",
+    "format": "json",
+    "purpose": "Nonfinite JSON number",
+    "expected": "rejected",
+    "error_code": "invalid_input",
+    "error": "Non-finite numbers are not supported",
+    "error_path": "/"
+  },
+  {
+    "file": "json_deep_nesting.json",
+    "source_id": "hardware-json",
+    "format": "json",
+    "purpose": "Nesting over depth limit",
+    "expected": "rejected",
+    "error_code": "limit_exceeded",
+    "error": "Document nesting or node limit exceeded",
+    "error_path": "/"
+  },
+  {
+    "file": "empty_file.json",
+    "source_id": "hardware-json",
+    "format": "json",
+    "purpose": "Empty upload",
+    "expected": "rejected",
+    "error_code": "request_validation",
+    "error": "1 validation error for IngestRequest\ncontent\n  String should have at least 1 character [type=string_too_short, input_value='', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/string_too_short",
+    "error_path": null
+  },
+  {
+    "file": "whitespace_only.json",
+    "source_id": "hardware-json",
+    "format": "json",
+    "purpose": "Whitespace-only upload",
+    "expected": "rejected",
+    "error_code": "request_validation",
+    "error": "1 validation error for IngestRequest\ncontent\n  Value error, Content must not be blank [type=value_error, input_value=' \\n\\t', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/value_error",
+    "error_path": null
+  },
+  {
+    "file": "hardware_quoted_bom.csv",
+    "source_id": "hardware-csv",
+    "format": "csv",
+    "purpose": "UTF-8 BOM, CRLF, escaped quotes, comma and multiline field",
+    "expected": "accepted",
+    "records": 1,
+    "warning_count": 0,
+    "warning_codes": []
+  },
+  {
+    "file": "hardware_headers_only.csv",
+    "source_id": "hardware-csv",
+    "format": "csv",
+    "purpose": "Header-only CSV rejected by normalized batch validation",
+    "expected": "rejected",
+    "error_code": "invalid_input",
+    "error": "Record does not satisfy the normalized schema",
+    "error_path": "/records"
+  },
+  {
+    "file": "csv_duplicate_headers.csv",
+    "source_id": "hardware-csv",
+    "format": "csv",
+    "purpose": "duplicate_headers",
+    "expected": "rejected",
+    "error_code": "invalid_input",
+    "error": "CSV headers must be nonblank and unique",
+    "error_path": "/"
+  },
+  {
+    "file": "csv_blank_header.csv",
+    "source_id": "hardware-csv",
+    "format": "csv",
+    "purpose": "blank_header",
+    "expected": "rejected",
+    "error_code": "invalid_input",
+    "error": "CSV headers must be nonblank and unique",
+    "error_path": "/"
+  },
+  {
+    "file": "csv_short_row.csv",
+    "source_id": "hardware-csv",
+    "format": "csv",
+    "purpose": "short_row",
+    "expected": "rejected",
+    "error_code": "invalid_input",
+    "error": "CSV row length does not match header",
+    "error_path": "/rows/0"
+  },
+  {
+    "file": "csv_long_row.csv",
+    "source_id": "hardware-csv",
+    "format": "csv",
+    "purpose": "long_row",
+    "expected": "rejected",
+    "error_code": "invalid_input",
+    "error": "CSV row length does not match header",
+    "error_path": "/rows/0"
+  },
+  {
+    "file": "csv_unterminated_quote.csv",
+    "source_id": "hardware-csv",
+    "format": "csv",
+    "purpose": "unterminated_quote",
+    "expected": "rejected",
+    "error_code": "invalid_input",
+    "error": "Malformed input document",
+    "error_path": "/"
+  },
+  {
+    "file": "csv_missing_required_header.csv",
+    "source_id": "hardware-csv",
+    "format": "csv",
+    "purpose": "missing_required_header",
+    "expected": "rejected",
+    "error_code": "invalid_input",
+    "error": "Hardware CSV requires device_id and hostname headers",
+    "error_path": "/"
+  },
+  {
+    "file": "hardware_1000_records.json",
+    "source_id": "hardware-json",
+    "format": "json",
+    "purpose": "1000 records: boundary of normalized record limit",
+    "expected": "accepted",
+    "records": 1000,
+    "warning_count": 0,
+    "warning_codes": []
+  },
+  {
+    "file": "hardware_1001_records.json",
+    "source_id": "hardware-json",
+    "format": "json",
+    "purpose": "1001 records: boundary of normalized record limit",
+    "expected": "rejected",
+    "error_code": "limit_exceeded",
+    "error": "More than 1000 records",
+    "error_path": ""
+  },
+  {
+    "file": "okta_5000_relationships.json",
+    "source_id": "okta-export",
+    "format": "json",
+    "purpose": "5000 relationships: boundary of relationship limit",
+    "expected": "accepted",
+    "records": 1,
+    "warning_count": 0,
+    "warning_codes": []
+  },
+  {
+    "file": "okta_5001_relationships.json",
+    "source_id": "okta-export",
+    "format": "json",
+    "purpose": "5001 relationships: boundary of relationship limit",
+    "expected": "rejected",
+    "error_code": "limit_exceeded",
+    "error": "More than 5000 list entries",
+    "error_path": "/0/apps"
+  },
+  {
+    "file": "upload_over_1mib.json",
+    "source_id": "hardware-json",
+    "format": "json",
+    "purpose": "Upload exceeds 1 MiB",
+    "expected": "rejected",
+    "error_code": "limit_exceeded",
+    "error": "Upload exceeds 1 MiB",
+    "error_path": "/"
+  },
+  {
+    "file": "ai_inventory_notes.txt",
+    "source_id": "uploaded-data",
+    "format": "text",
+    "purpose": "Unstructured prose containing device, user, app, and relationships",
+    "expected": "Requires configured AI extraction; model-dependent results"
+  }
+]

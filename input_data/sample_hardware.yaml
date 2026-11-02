@@ -1,0 +1,121 @@
+---
+# Hardware Inventory - YAML Format
+# Export Date: 2024-07-23
+# System: IT Asset Management Platform
+
+inventory:
+  metadata:
+    export_date: "2024-07-23T14:00:00Z"
+    total_devices: 3
+    organization: "Example Corp"
+    exported_by: "IT Asset Management System"
+
+  devices:
+    - device_id: C-19283
+      hostname: laptop-jdoe
+      type: laptop
+      assigned_to:
+        name: John Doe
+        email: john.doe@example.com
+        employee_id: EMP-2156
+        department: Engineering
+        team: Platform Engineering
+      hardware:
+        manufacturer: Apple
+        model: MacBook Pro 14-inch 2023
+        cpu: Apple M2 Pro
+        ram_gb: 32
+        storage_gb: 1000
+        serial_number: LAP-JD-20230615
+      network:
+        primary_ip: 10.10.22.5
+        mac_address: "AA:BB:CC:DD:11:22"
+        wifi_enabled: true
+      operating_system:
+        name: macOS
+        version: "Ventura 13.5"
+        build: "22G74"
+        last_update: "2024-07-15"
+      security:
+        encryption_enabled: true
+        encryption_type: FileVault 2
+        firewall_enabled: true
+        antivirus: "CrowdStrike Falcon"
+        last_security_scan: "2024-07-22T08:00:00Z"
+      location:
+        site: "London"
+      compliance:
+        compliant: true
+        last_audit: "2024-06-30"
+      status:
+        operational_status: deactivated
+        last_checkin: "2024-07-23T13:45:00Z"
+        warranty_expiry: "2026-06-15"
+
+    - device_id: D-10005
+      hostname: laptop-devops
+      type: laptop
+      assigned_to:
+        name: Sarah Chen
+        email: sarah.chen@example.com
+        employee_id: EMP-3087
+        department: Engineering
+        team: DevOps
+      hardware:
+        manufacturer: Lenovo
+        model: ThinkPad X1 Carbon Gen 10
+        cpu: Intel Core i7-1260P
+        ram_gb: 32
+        storage_gb: 512
+        serial_number: LAP-ENG-20230420
+      network:
+        primary_ip: 10.10.22.45
+        mac_address: "F0:DE:F1:12:34:56"
+      operating_system:
+        name: Ubuntu
+        version: "22.04 LTS"
+        kernel: "5.15.0-76-generic"
+      security:
+        encryption_enabled: true
+        encryption_type: LUKS Full Disk Encryption
+        firewall_enabled: true
+        ssh_key_auth: true
+      location:
+        site: "San Francisco Office"
+      status:
+        operational_status: active
+        last_checkin: "2024-07-23T12:30:00Z"
+
+    - device_id: HW-2024-003
+      hostname: macbook-cto-01
+      type: laptop
+      assigned_to:
+        name: Jane Doe
+        email: jane.doe@example.com
+        employee_id: EMP-1001
+        department: Executive
+        title: "Chief Technology Officer"
+      hardware:
+        manufacturer: Apple
+        model: MacBook Pro 16-inch 2023
+        cpu: Apple M3 Max
+        ram_gb: 96
+        storage_gb: 2000
+        serial_number: MBA-EXEC-20231215
+      network:
+        primary_ip: 10.10.22.100
+        mac_address: "8C:85:90:AA:BB:CC"
+      operating_system:
+        name: macOS
+        version: "Sonoma 14.5"
+      security:
+        encryption_enabled: true
+        encryption_type: FileVault 2
+        mdm_enrolled: true
+        compliance_profile: "Executive"
+      location:
+        site: "New York HQ"
+      status:
+        operational_status: active
+        last_checkin: "2024-07-23T14:00:00Z"
+        priority: "high"

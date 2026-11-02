@@ -1,0 +1,7 @@
+[
+  {
+    "device_id": "TEST-BAD",
+    "hostname": "test-bad",
+    "mac_address": "xx:yy:zz"
+  }
+]

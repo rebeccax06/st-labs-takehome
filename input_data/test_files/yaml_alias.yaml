@@ -1,0 +1,3 @@
+inventory:
+  devices: &items []
+  copy: *items

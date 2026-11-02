@@ -1,0 +1,3 @@
+Test inventory notes:
+Device TEST-TEXT-001 (hostname test-notes) runs Ubuntu 24.04 and is assigned to Taylor Test (taylor@example.test).
+Taylor has MFA disabled and uses Test Portal. Test Portal is a SaaS application owned by the Test Team.
