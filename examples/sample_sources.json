@@ -1,0 +1,82 @@
+[
+  {
+    "file": "sample_hardware.json",
+    "source": {
+      "organization_id": "example-corp",
+      "source_id": "hardware-json",
+      "adapter": "hardware_json",
+      "identifier_authorities": {
+        "device_id": "hardware"
+      }
+    }
+  },
+  {
+    "file": "sample_hardware.csv",
+    "source": {
+      "organization_id": "example-corp",
+      "source_id": "hardware-csv",
+      "adapter": "hardware_csv",
+      "identifier_authorities": {
+        "device_id": "hardware",
+        "serial": "hardware-serials"
+      }
+    }
+  },
+  {
+    "file": "sample_hardware.yaml",
+    "source": {
+      "organization_id": "example-corp",
+      "source_id": "hardware-yaml",
+      "adapter": "hardware_yaml",
+      "identifier_authorities": {
+        "device_id": "hardware",
+        "serial": "hardware-serials",
+        "email": "directory"
+      },
+      "case_insensitive_identifiers": [
+        "app_name",
+        "email"
+      ],
+      "snapshot_time_path": [
+        "inventory",
+        "metadata",
+        "export_date"
+      ]
+    }
+  },
+  {
+    "file": "sample_okta.json",
+    "source": {
+      "organization_id": "example-corp",
+      "source_id": "okta-export",
+      "adapter": "okta_json",
+      "identifier_authorities": {
+        "email": "directory",
+        "app_name": "application-catalog"
+      },
+      "case_insensitive_identifiers": [
+        "app_name",
+        "email"
+      ]
+    }
+  },
+  {
+    "file": "sample_app.json",
+    "source": {
+      "organization_id": "example-corp",
+      "source_id": "application-inventory",
+      "adapter": "applications_json",
+      "identifier_authorities": {
+        "app_name": "application-catalog"
+      },
+      "snapshot_time_path": [
+        "inventory_metadata",
+        "export_date"
+      ],
+      "application_aliases": {
+        "GitHub": "GitHub Enterprise",
+        "Salesforce": "Salesforce CRM"
+      }
+    }
+  }
+]
