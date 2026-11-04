@@ -1,0 +1,160 @@
+[
+  {
+    "question": "Which users don't have MFA?",
+    "plan": {
+      "root": "user",
+      "operation": "list",
+      "where": [
+        {
+          "field": "mfa_enabled",
+          "operator": "eq",
+          "value": false
+        }
+      ],
+      "exists": []
+    },
+    "expected_total": 3
+  },
+  {
+    "question": "Which devices run macOS?",
+    "plan": {
+      "root": "device",
+      "operation": "list",
+      "where": [
+        {
+          "field": "os_family",
+          "operator": "eq",
+          "value": "macos"
+        }
+      ],
+      "exists": []
+    },
+    "expected_total": 2
+  },
+  {
+    "question": "Who uses GitHub?",
+    "plan": {
+      "root": "user",
+      "operation": "list",
+      "where": [],
+      "exists": [
+        {
+          "relation": "uses",
+          "direction": "out",
+          "target_kind": "application",
+          "where": [
+            {
+              "field": "name",
+              "operator": "eq",
+              "value": "GitHub"
+            }
+          ],
+          "exists": []
+        }
+      ]
+    },
+    "expected_total": 5
+  },
+  {
+    "question": "Which devices belong to users without MFA?",
+    "plan": {
+      "root": "device",
+      "operation": "list",
+      "where": [],
+      "exists": [
+        {
+          "relation": "assigned_to",
+          "direction": "out",
+          "target_kind": "user",
+          "where": [
+            {
+              "field": "mfa_enabled",
+              "operator": "eq",
+              "value": false
+            }
+          ],
+          "exists": []
+        }
+      ]
+    },
+    "expected_total": 0
+  },
+  {
+    "question": "Which devices belong to users without MFA who use GitHub?",
+    "plan": {
+      "root": "device",
+      "operation": "list",
+      "where": [],
+      "exists": [
+        {
+          "relation": "assigned_to",
+          "direction": "out",
+          "target_kind": "user",
+          "where": [
+            {
+              "field": "mfa_enabled",
+              "operator": "eq",
+              "value": false
+            }
+          ],
+          "exists": [
+            {
+              "relation": "uses",
+              "direction": "out",
+              "target_kind": "application",
+              "where": [
+                {
+                  "field": "name",
+                  "operator": "eq",
+                  "value": "GitHub"
+                }
+              ],
+              "exists": []
+            }
+          ]
+        }
+      ]
+    },
+    "expected_total": 0
+  },
+  {
+    "question": "Which applications depend on Salesforce?",
+    "plan": {
+      "root": "application",
+      "operation": "list",
+      "where": [],
+      "exists": [
+        {
+          "relation": "depends_on",
+          "direction": "out",
+          "target_kind": "application",
+          "where": [
+            {
+              "field": "name",
+              "operator": "eq",
+              "value": "Salesforce"
+            }
+          ],
+          "exists": []
+        }
+      ]
+    },
+    "expected_total": 0
+  },
+  {
+    "question": "How many active devices are there?",
+    "plan": {
+      "root": "device",
+      "operation": "count",
+      "where": [
+        {
+          "field": "status",
+          "operator": "eq",
+          "value": "active"
+        }
+      ],
+      "exists": []
+    },
+    "expected_total": 1
+  }
+]
