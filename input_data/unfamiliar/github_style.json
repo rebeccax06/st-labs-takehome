@@ -1,0 +1,25 @@
+{
+  "organization": {
+    "id": 505,
+    "login": "test-example-org"
+  },
+  "members": [
+    {
+      "id": 506,
+      "login": "test-dev",
+      "name": "Test Developer",
+      "email": "developer@example.test",
+      "two_factor_authentication": false
+    }
+  ],
+  "application": {
+    "id": "TEST-GITHUB",
+    "name": "GitHub"
+  },
+  "assignments": [
+    {
+      "member_id": 506,
+      "application_id": "TEST-GITHUB"
+    }
+  ]
+}

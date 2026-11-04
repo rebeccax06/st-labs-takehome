@@ -1,0 +1,11 @@
+{
+  "computers": [
+    {
+      "id": 303,
+      "name": "test-glpi-linux",
+      "serial": "TEST-GLPI-303",
+      "operatingsystems_name": "Ubuntu 24.04",
+      "locations_name": "Test Branch"
+    }
+  ]
+}

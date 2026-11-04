@@ -1,0 +1,19 @@
+{
+  "application": {
+    "id": "TEST-SF",
+    "name": "Salesforce",
+    "type": "SaaS"
+  },
+  "records": [
+    {
+      "Id": "TEST-SF-U707",
+      "Name": "Test Sales User",
+      "Email": "sales@example.test",
+      "IsActive": true,
+      "LastLoginDate": "2026-10-30T09:00:00Z"
+    }
+  ],
+  "usage": {
+    "licensed_users": 1
+  }
+}

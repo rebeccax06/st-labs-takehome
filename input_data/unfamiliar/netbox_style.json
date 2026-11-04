@@ -1,0 +1,21 @@
+{
+  "count": 1,
+  "results": [
+    {
+      "id": 404,
+      "name": "test-netbox-router",
+      "device_type": {
+        "model": "Test Router"
+      },
+      "site": {
+        "name": "Test DC"
+      },
+      "primary_ip4": {
+        "address": "192.0.2.44/24"
+      },
+      "status": {
+        "value": "active"
+      }
+    }
+  ]
+}

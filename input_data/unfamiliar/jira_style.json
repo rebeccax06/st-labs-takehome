@@ -1,0 +1,19 @@
+{
+  "values": [
+    {
+      "id": "606",
+      "key": "TEST",
+      "name": "Test Jira Project",
+      "lead": {
+        "accountId": "TEST-LEAD",
+        "displayName": "Test Project Lead",
+        "emailAddress": "lead@example.test"
+      }
+    }
+  ],
+  "application": {
+    "id": "TEST-JIRA",
+    "name": "Jira",
+    "type": "SaaS"
+  }
+}

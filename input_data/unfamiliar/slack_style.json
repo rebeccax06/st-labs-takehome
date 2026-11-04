@@ -1,0 +1,23 @@
+{
+  "workspace": {
+    "id": "TEST-T909",
+    "name": "Test Workspace"
+  },
+  "members": [
+    {
+      "id": "TEST-U909",
+      "name": "test-slack-user",
+      "deleted": false,
+      "is_bot": false,
+      "profile": {
+        "real_name": "Test Slack User",
+        "email": "slack@example.test"
+      }
+    }
+  ],
+  "application": {
+    "id": "TEST-SLACK",
+    "name": "Slack",
+    "type": "SaaS"
+  }
+}

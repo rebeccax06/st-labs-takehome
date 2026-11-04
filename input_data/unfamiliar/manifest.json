@@ -1,0 +1,105 @@
+[
+  {
+    "file": "jamf_style.json",
+    "kind": "device",
+    "expected_name": "test-jamf-mac",
+    "format": "json",
+    "expected_attributes": {
+      "os_family": "macos",
+      "serial_number": "TEST-JAMF-101",
+      "location": "Test HQ"
+    }
+  },
+  {
+    "file": "sccm_style.json",
+    "kind": "device",
+    "expected_name": "test-sccm-pc",
+    "format": "json",
+    "expected_attributes": {
+      "os_family": "windows",
+      "ip_address": "192.0.2.22",
+      "location": "Test Lab"
+    }
+  },
+  {
+    "file": "glpi_style.json",
+    "kind": "device",
+    "expected_name": "test-glpi-linux",
+    "format": "json",
+    "expected_attributes": {
+      "os_family": "linux",
+      "serial_number": "TEST-GLPI-303",
+      "location": "Test Branch"
+    }
+  },
+  {
+    "file": "netbox_style.json",
+    "kind": "device",
+    "expected_name": "test-netbox-router",
+    "format": "json",
+    "expected_attributes": {
+      "ip_address": "192.0.2.44",
+      "status": "active",
+      "location": "Test DC"
+    }
+  },
+  {
+    "file": "github_style.json",
+    "kind": "user",
+    "expected_name": "Test Developer",
+    "format": "json",
+    "expected_attributes": {
+      "email": "developer@example.test",
+      "mfa_enabled": false
+    }
+  },
+  {
+    "file": "jira_style.json",
+    "kind": "application",
+    "expected_name": "Jira",
+    "format": "json",
+    "expected_attributes": {
+      "app_type": "saas"
+    }
+  },
+  {
+    "file": "salesforce_style.json",
+    "kind": "user",
+    "expected_name": "Test Sales User",
+    "format": "json",
+    "expected_attributes": {
+      "email": "sales@example.test",
+      "status": "active"
+    }
+  },
+  {
+    "file": "workday_style.json",
+    "kind": "user",
+    "expected_name": "Test HR User",
+    "format": "json",
+    "expected_attributes": {
+      "email": "hr@example.test",
+      "status": "active"
+    }
+  },
+  {
+    "file": "slack_style.json",
+    "kind": "user",
+    "expected_name": "Test Slack User",
+    "format": "json",
+    "expected_attributes": {
+      "email": "slack@example.test"
+    }
+  },
+  {
+    "file": "snmp_style.csv",
+    "kind": "device",
+    "expected_name": "test-snmp-switch",
+    "format": "csv",
+    "expected_attributes": {
+      "ip_address": "192.0.2.55",
+      "mac_address": "02:00:00:00:00:01",
+      "location": "Test Rack 4"
+    }
+  }
+]

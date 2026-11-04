@@ -1,0 +1,13 @@
+{
+  "SMS_R_System": [
+    {
+      "ResourceID": 202,
+      "Name": "test-sccm-pc",
+      "OperatingSystemNameandVersion": "Microsoft Windows 11",
+      "IPAddresses": [
+        "192.0.2.22"
+      ],
+      "PhysicalLocation": "Test Lab"
+    }
+  ]
+}

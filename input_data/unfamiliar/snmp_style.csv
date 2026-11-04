@@ -1,0 +1,2 @@
+inventory_key,sysName,sysDescr,ifPhysAddress,sysLocation,management_address
+TEST-SNMP-1,test-snmp-switch,Linux switch,02:00:00:00:00:01,Test Rack 4,192.0.2.55

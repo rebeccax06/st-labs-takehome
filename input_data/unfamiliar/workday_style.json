@@ -1,0 +1,16 @@
+{
+  "Report_Entry": [
+    {
+      "Worker_ID": "TEST-W808",
+      "Legal_Name": "Test HR User",
+      "Email_Address": "hr@example.test",
+      "Organization": "Test People Team",
+      "Active": true
+    }
+  ],
+  "application": {
+    "id": "TEST-WORKDAY",
+    "name": "Workday",
+    "type": "SaaS"
+  }
+}
