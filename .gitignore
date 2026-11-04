@@ -7,3 +7,4 @@ __pycache__/
 *.db-shm
 *.db-wal
 token.txt
+/output.json
