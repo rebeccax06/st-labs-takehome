@@ -1,0 +1,3151 @@
+{
+  "mode": "live_openrouter",
+  "model": "openai/gpt-4o-mini",
+  "extraction_version": "extraction-v7",
+  "verification_scope": "Incremental live smoke checks on ten synthetic vendor-inspired fixtures; not exhaustive vendor compatibility or model accuracy verification. Eight passed the first rerun; Salesforce passed after scope guidance; GitHub passed after precise evidence correction hints. Not one simultaneous ten-case run of the final revision.",
+  "baseline": {
+    "mode": "live_openrouter",
+    "model": "openai/gpt-4o-mini",
+    "fixtures": "Synthetic vendor-inspired layouts, not official vendor exports",
+    "results": [
+      {
+        "file": "jamf_style.json",
+        "http_status": 502,
+        "ingestion": {
+          "error": {
+            "code": "ai_invalid_response",
+            "message": "AI extraction failed schema or evidence validation; no data was saved.",
+            "request_id": "50175d51-30b8-4007-9aef-4aed6d74c1d3",
+            "details": []
+          }
+        },
+        "passed": false
+      },
+      {
+        "file": "sccm_style.json",
+        "http_status": 502,
+        "ingestion": {
+          "error": {
+            "code": "ai_invalid_response",
+            "message": "AI extraction failed schema or evidence validation; no data was saved.",
+            "request_id": "cc284e32-fbf9-4499-a46e-ba671d544496",
+            "details": []
+          }
+        },
+        "passed": false
+      },
+      {
+        "file": "glpi_style.json",
+        "http_status": 502,
+        "ingestion": {
+          "error": {
+            "code": "ai_invalid_response",
+            "message": "AI extraction failed schema or evidence validation; no data was saved.",
+            "request_id": "a1e7b7f7-7650-4769-a121-f4eebc475ca2",
+            "details": []
+          }
+        },
+        "passed": false
+      },
+      {
+        "file": "netbox_style.json",
+        "http_status": 502,
+        "ingestion": {
+          "error": {
+            "code": "ai_invalid_response",
+            "message": "AI extraction failed schema or evidence validation; no data was saved.",
+            "request_id": "136799eb-f038-42cc-be17-8b0456f8d861",
+            "details": []
+          }
+        },
+        "passed": false
+      },
+      {
+        "file": "github_style.json",
+        "http_status": 502,
+        "ingestion": {
+          "error": {
+            "code": "ai_invalid_response",
+            "message": "AI extraction failed schema or evidence validation; no data was saved.",
+            "request_id": "541f61bf-b926-4b48-a796-91c2f6b6c370",
+            "details": []
+          }
+        },
+        "passed": false
+      },
+      {
+        "file": "jira_style.json",
+        "http_status": 422,
+        "ingestion": {
+          "error": {
+            "code": "unsupported_layout",
+            "message": "No supported devices, users, or applications were identified. Check the layout or select a known source.",
+            "request_id": "7c1d0ee2-0080-4eb3-b87c-92ba4633058d",
+            "details": [
+              {
+                "path": "/"
+              }
+            ]
+          }
+        },
+        "passed": false
+      },
+      {
+        "file": "salesforce_style.json",
+        "http_status": 502,
+        "ingestion": {
+          "error": {
+            "code": "ai_invalid_response",
+            "message": "AI extraction failed schema or evidence validation; no data was saved.",
+            "request_id": "603f948f-6c04-49d4-a435-b7624af35a12",
+            "details": []
+          }
+        },
+        "passed": false
+      },
+      {
+        "file": "workday_style.json",
+        "http_status": 502,
+        "ingestion": {
+          "error": {
+            "code": "ai_invalid_response",
+            "message": "AI extraction failed schema or evidence validation; no data was saved.",
+            "request_id": "75ffaf5b-f816-44a2-b3c2-080cd9ad7756",
+            "details": []
+          }
+        },
+        "passed": false
+      },
+      {
+        "file": "slack_style.json",
+        "http_status": 502,
+        "ingestion": {
+          "error": {
+            "code": "ai_invalid_response",
+            "message": "AI extraction failed schema or evidence validation; no data was saved.",
+            "request_id": "3e1f7128-247f-4cb7-a40b-c238997805ea",
+            "details": []
+          }
+        },
+        "passed": false
+      },
+      {
+        "file": "snmp_style.csv",
+        "http_status": 502,
+        "ingestion": {
+          "error": {
+            "code": "ai_invalid_response",
+            "message": "AI extraction failed schema or evidence validation; no data was saved.",
+            "request_id": "e99ac67d-a76f-4260-ad72-ed0fb2be3fbb",
+            "details": []
+          }
+        },
+        "passed": false
+      },
+      {
+        "summary": true,
+        "passed": 0,
+        "total": 10
+      }
+    ],
+    "diagnostic": {
+      "fixture": "jamf_style.json",
+      "conversion_error": "Evidence quote does not occur in the input",
+      "cause": "Model supplied reserialized JSON as an exact quote; whitespace differed from source. Both original and correction failed.",
+      "scope": "This cause is verified for Jamf only; other failures need individual diagnosis."
+    }
+  },
+  "runs": [
+    {
+      "revision": "structured_pointer_example",
+      "results": [
+        {
+          "file": "jamf_style.json",
+          "http_status": 200,
+          "ingestion": {
+            "run_id": "48e4ac9d-fe68-4fde-87fe-438cf5274103",
+            "replayed": false,
+            "records": {
+              "received": 1,
+              "resolved": 1,
+              "quarantined": 0
+            },
+            "entities": {
+              "created": 1,
+              "updated": 0,
+              "unchanged": 0
+            },
+            "relationships": {
+              "created": 0,
+              "removed": 0,
+              "unchanged": 0
+            },
+            "warning_count": 0,
+            "warnings": [],
+            "unresolved_reference_count": 0
+          },
+          "inventory": {
+            "device": {
+              "data": [
+                {
+                  "id": "73dc95ef-d51d-418d-9dae-09b1979e61cb",
+                  "kind": "device",
+                  "display_name": "test-jamf-mac",
+                  "is_reference": false,
+                  "created_at": "2026-11-02T20:28:40.100432Z",
+                  "updated_at": "2026-11-02T20:28:40.107009Z",
+                  "attributes": {
+                    "hostname": "test-jamf-mac",
+                    "ip_address": null,
+                    "mac_address": null,
+                    "serial_number": "TEST-JAMF-101",
+                    "os_family": "macos",
+                    "os_version": "14.6",
+                    "location": "Test HQ",
+                    "status": null,
+                    "encrypted": null,
+                    "device_type": null,
+                    "department": null,
+                    "last_checkin": null
+                  },
+                  "has_conflicts": false,
+                  "assigned_user_id": null
+                }
+              ],
+              "total": 1,
+              "limit": 100,
+              "offset": 0
+            },
+            "user": {
+              "data": [],
+              "total": 0,
+              "limit": 100,
+              "offset": 0
+            },
+            "application": {
+              "data": [],
+              "total": 0,
+              "limit": 100,
+              "offset": 0
+            }
+          },
+          "details": [
+            {
+              "id": "73dc95ef-d51d-418d-9dae-09b1979e61cb",
+              "kind": "device",
+              "display_name": "test-jamf-mac",
+              "is_reference": false,
+              "created_at": "2026-11-02T20:28:40.100432Z",
+              "updated_at": "2026-11-02T20:28:40.107009Z",
+              "attributes": {
+                "hostname": "test-jamf-mac",
+                "ip_address": null,
+                "mac_address": null,
+                "serial_number": "TEST-JAMF-101",
+                "os_family": "macos",
+                "os_version": "14.6",
+                "location": "Test HQ",
+                "status": null,
+                "encrypted": null,
+                "device_type": null,
+                "department": null,
+                "last_checkin": null
+              },
+              "has_conflicts": false,
+              "assigned_user_id": null,
+              "identifiers": [
+                {
+                  "id": "1cd643d5-883c-4a2c-adf2-039cde4412b4",
+                  "namespace": "[\"example-corp\",\"device\",\"uploaded-data\",\"device_id\"]",
+                  "value": "101"
+                }
+              ],
+              "field_state": {
+                "hostname": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "9112ce03-b71e-429f-9814-114069f4809c"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "9112ce03-b71e-429f-9814-114069f4809c",
+                      "source_id": "uploaded-data",
+                      "run_id": "48e4ac9d-fe68-4fde-87fe-438cf5274103",
+                      "value": "test-jamf-mac",
+                      "extraction_evidence": {
+                        "pointer": "/computers/0/general/name",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "serial_number": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "9112ce03-b71e-429f-9814-114069f4809c"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "9112ce03-b71e-429f-9814-114069f4809c",
+                      "source_id": "uploaded-data",
+                      "run_id": "48e4ac9d-fe68-4fde-87fe-438cf5274103",
+                      "value": "TEST-JAMF-101",
+                      "extraction_evidence": {
+                        "pointer": "/computers/0/hardware/serial_number",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "os_family": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "9112ce03-b71e-429f-9814-114069f4809c"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "9112ce03-b71e-429f-9814-114069f4809c",
+                      "source_id": "uploaded-data",
+                      "run_id": "48e4ac9d-fe68-4fde-87fe-438cf5274103",
+                      "value": "macos",
+                      "extraction_evidence": {
+                        "pointer": "/computers/0/hardware/os_name",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "os_version": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "9112ce03-b71e-429f-9814-114069f4809c"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "9112ce03-b71e-429f-9814-114069f4809c",
+                      "source_id": "uploaded-data",
+                      "run_id": "48e4ac9d-fe68-4fde-87fe-438cf5274103",
+                      "value": "14.6",
+                      "extraction_evidence": {
+                        "pointer": "/computers/0/hardware/os_version",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "location": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "9112ce03-b71e-429f-9814-114069f4809c"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "9112ce03-b71e-429f-9814-114069f4809c",
+                      "source_id": "uploaded-data",
+                      "run_id": "48e4ac9d-fe68-4fde-87fe-438cf5274103",
+                      "value": "Test HQ",
+                      "extraction_evidence": {
+                        "pointer": "/computers/0/location/building",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                }
+              },
+              "relationships": {
+                "data": [],
+                "total": 0,
+                "limit": 50,
+                "offset": 0
+              },
+              "provenance": {
+                "total": 1,
+                "data": [
+                  {
+                    "observation_id": "9112ce03-b71e-429f-9814-114069f4809c",
+                    "source_id": "uploaded-data",
+                    "run_id": "48e4ac9d-fe68-4fde-87fe-438cf5274103",
+                    "record_key": "/ai/records/0",
+                    "observed_at": null,
+                    "resolution_status": "resolved",
+                    "origin": "ai",
+                    "attributes": {
+                      "hostname": "test-jamf-mac",
+                      "serial_number": "TEST-JAMF-101",
+                      "os_family": "macos",
+                      "os_version": "14.6",
+                      "location": "Test HQ"
+                    },
+                    "relation_type": null,
+                    "target_ci_id": null
+                  }
+                ]
+              },
+              "warnings": []
+            }
+          ],
+          "checks": {
+            "expected_entity": true,
+            "ai_provenance": true,
+            "replay": true,
+            "field_preservation": true
+          },
+          "passed": true
+        },
+        {
+          "file": "sccm_style.json",
+          "http_status": 200,
+          "ingestion": {
+            "run_id": "4c64f157-4ff6-4ff0-872c-bc77e00c097d",
+            "replayed": false,
+            "records": {
+              "received": 1,
+              "resolved": 1,
+              "quarantined": 0
+            },
+            "entities": {
+              "created": 1,
+              "updated": 0,
+              "unchanged": 0
+            },
+            "relationships": {
+              "created": 0,
+              "removed": 0,
+              "unchanged": 0
+            },
+            "warning_count": 0,
+            "warnings": [],
+            "unresolved_reference_count": 0
+          },
+          "inventory": {
+            "device": {
+              "data": [
+                {
+                  "id": "e723fb99-6c58-476a-aae6-dd17530c2824",
+                  "kind": "device",
+                  "display_name": "test-sccm-pc",
+                  "is_reference": false,
+                  "created_at": "2026-11-02T20:28:45.571587Z",
+                  "updated_at": "2026-11-02T20:28:45.576037Z",
+                  "attributes": {
+                    "hostname": "test-sccm-pc",
+                    "ip_address": "192.0.2.22",
+                    "mac_address": null,
+                    "serial_number": null,
+                    "os_family": "windows",
+                    "os_version": "11",
+                    "location": "Test Lab",
+                    "status": null,
+                    "encrypted": null,
+                    "device_type": null,
+                    "department": null,
+                    "last_checkin": null
+                  },
+                  "has_conflicts": false,
+                  "assigned_user_id": null
+                }
+              ],
+              "total": 1,
+              "limit": 100,
+              "offset": 0
+            },
+            "user": {
+              "data": [],
+              "total": 0,
+              "limit": 100,
+              "offset": 0
+            },
+            "application": {
+              "data": [],
+              "total": 0,
+              "limit": 100,
+              "offset": 0
+            }
+          },
+          "details": [
+            {
+              "id": "e723fb99-6c58-476a-aae6-dd17530c2824",
+              "kind": "device",
+              "display_name": "test-sccm-pc",
+              "is_reference": false,
+              "created_at": "2026-11-02T20:28:45.571587Z",
+              "updated_at": "2026-11-02T20:28:45.576037Z",
+              "attributes": {
+                "hostname": "test-sccm-pc",
+                "ip_address": "192.0.2.22",
+                "mac_address": null,
+                "serial_number": null,
+                "os_family": "windows",
+                "os_version": "11",
+                "location": "Test Lab",
+                "status": null,
+                "encrypted": null,
+                "device_type": null,
+                "department": null,
+                "last_checkin": null
+              },
+              "has_conflicts": false,
+              "assigned_user_id": null,
+              "identifiers": [
+                {
+                  "id": "3cda955c-932e-4817-8647-3ae671d0e17a",
+                  "namespace": "[\"example-corp\",\"device\",\"uploaded-data\",\"device_id\"]",
+                  "value": "202"
+                }
+              ],
+              "field_state": {
+                "hostname": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "04c5657e-e151-4dde-8e37-ed7798fef4aa"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "04c5657e-e151-4dde-8e37-ed7798fef4aa",
+                      "source_id": "uploaded-data",
+                      "run_id": "4c64f157-4ff6-4ff0-872c-bc77e00c097d",
+                      "value": "test-sccm-pc",
+                      "extraction_evidence": {
+                        "pointer": "/SMS_R_System/0/Name",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "ip_address": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "04c5657e-e151-4dde-8e37-ed7798fef4aa"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "04c5657e-e151-4dde-8e37-ed7798fef4aa",
+                      "source_id": "uploaded-data",
+                      "run_id": "4c64f157-4ff6-4ff0-872c-bc77e00c097d",
+                      "value": "192.0.2.22",
+                      "extraction_evidence": {
+                        "pointer": "/SMS_R_System/0/IPAddresses/0",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "os_family": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "04c5657e-e151-4dde-8e37-ed7798fef4aa"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "04c5657e-e151-4dde-8e37-ed7798fef4aa",
+                      "source_id": "uploaded-data",
+                      "run_id": "4c64f157-4ff6-4ff0-872c-bc77e00c097d",
+                      "value": "windows",
+                      "extraction_evidence": {
+                        "pointer": "/SMS_R_System/0/OperatingSystemNameandVersion",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "os_version": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "04c5657e-e151-4dde-8e37-ed7798fef4aa"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "04c5657e-e151-4dde-8e37-ed7798fef4aa",
+                      "source_id": "uploaded-data",
+                      "run_id": "4c64f157-4ff6-4ff0-872c-bc77e00c097d",
+                      "value": "11",
+                      "extraction_evidence": {
+                        "pointer": "/SMS_R_System/0/OperatingSystemNameandVersion",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "location": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "04c5657e-e151-4dde-8e37-ed7798fef4aa"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "04c5657e-e151-4dde-8e37-ed7798fef4aa",
+                      "source_id": "uploaded-data",
+                      "run_id": "4c64f157-4ff6-4ff0-872c-bc77e00c097d",
+                      "value": "Test Lab",
+                      "extraction_evidence": {
+                        "pointer": "/SMS_R_System/0/PhysicalLocation",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                }
+              },
+              "relationships": {
+                "data": [],
+                "total": 0,
+                "limit": 50,
+                "offset": 0
+              },
+              "provenance": {
+                "total": 1,
+                "data": [
+                  {
+                    "observation_id": "04c5657e-e151-4dde-8e37-ed7798fef4aa",
+                    "source_id": "uploaded-data",
+                    "run_id": "4c64f157-4ff6-4ff0-872c-bc77e00c097d",
+                    "record_key": "/ai/records/0",
+                    "observed_at": null,
+                    "resolution_status": "resolved",
+                    "origin": "ai",
+                    "attributes": {
+                      "hostname": "test-sccm-pc",
+                      "ip_address": "192.0.2.22",
+                      "os_family": "windows",
+                      "os_version": "11",
+                      "location": "Test Lab"
+                    },
+                    "relation_type": null,
+                    "target_ci_id": null
+                  }
+                ]
+              },
+              "warnings": []
+            }
+          ],
+          "checks": {
+            "expected_entity": true,
+            "ai_provenance": true,
+            "replay": true,
+            "field_preservation": true
+          },
+          "passed": true
+        },
+        {
+          "file": "glpi_style.json",
+          "http_status": 200,
+          "ingestion": {
+            "run_id": "270b8841-d4ad-40fb-9edf-b3c9f049edca",
+            "replayed": false,
+            "records": {
+              "received": 1,
+              "resolved": 1,
+              "quarantined": 0
+            },
+            "entities": {
+              "created": 1,
+              "updated": 0,
+              "unchanged": 0
+            },
+            "relationships": {
+              "created": 0,
+              "removed": 0,
+              "unchanged": 0
+            },
+            "warning_count": 0,
+            "warnings": [],
+            "unresolved_reference_count": 0
+          },
+          "inventory": {
+            "device": {
+              "data": [
+                {
+                  "id": "eecc7af5-f40d-474d-a63c-9783e3411ce3",
+                  "kind": "device",
+                  "display_name": "test-glpi-linux",
+                  "is_reference": false,
+                  "created_at": "2026-11-02T20:28:50.598437Z",
+                  "updated_at": "2026-11-02T20:28:50.602064Z",
+                  "attributes": {
+                    "hostname": "test-glpi-linux",
+                    "ip_address": null,
+                    "mac_address": null,
+                    "serial_number": "TEST-GLPI-303",
+                    "os_family": "linux",
+                    "os_version": "24.04",
+                    "location": "Test Branch",
+                    "status": null,
+                    "encrypted": null,
+                    "device_type": null,
+                    "department": null,
+                    "last_checkin": null
+                  },
+                  "has_conflicts": false,
+                  "assigned_user_id": null
+                }
+              ],
+              "total": 1,
+              "limit": 100,
+              "offset": 0
+            },
+            "user": {
+              "data": [],
+              "total": 0,
+              "limit": 100,
+              "offset": 0
+            },
+            "application": {
+              "data": [],
+              "total": 0,
+              "limit": 100,
+              "offset": 0
+            }
+          },
+          "details": [
+            {
+              "id": "eecc7af5-f40d-474d-a63c-9783e3411ce3",
+              "kind": "device",
+              "display_name": "test-glpi-linux",
+              "is_reference": false,
+              "created_at": "2026-11-02T20:28:50.598437Z",
+              "updated_at": "2026-11-02T20:28:50.602064Z",
+              "attributes": {
+                "hostname": "test-glpi-linux",
+                "ip_address": null,
+                "mac_address": null,
+                "serial_number": "TEST-GLPI-303",
+                "os_family": "linux",
+                "os_version": "24.04",
+                "location": "Test Branch",
+                "status": null,
+                "encrypted": null,
+                "device_type": null,
+                "department": null,
+                "last_checkin": null
+              },
+              "has_conflicts": false,
+              "assigned_user_id": null,
+              "identifiers": [
+                {
+                  "id": "fe1102c2-e872-4bc4-8faa-12af5db7425f",
+                  "namespace": "[\"example-corp\",\"device\",\"uploaded-data\",\"device_id\"]",
+                  "value": "303"
+                }
+              ],
+              "field_state": {
+                "hostname": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "53d65fc4-7947-44f9-8a50-6c42e0223ef6"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "53d65fc4-7947-44f9-8a50-6c42e0223ef6",
+                      "source_id": "uploaded-data",
+                      "run_id": "270b8841-d4ad-40fb-9edf-b3c9f049edca",
+                      "value": "test-glpi-linux",
+                      "extraction_evidence": {
+                        "pointer": "/computers/0/name",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "serial_number": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "53d65fc4-7947-44f9-8a50-6c42e0223ef6"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "53d65fc4-7947-44f9-8a50-6c42e0223ef6",
+                      "source_id": "uploaded-data",
+                      "run_id": "270b8841-d4ad-40fb-9edf-b3c9f049edca",
+                      "value": "TEST-GLPI-303",
+                      "extraction_evidence": {
+                        "pointer": "/computers/0/serial",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "os_family": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "53d65fc4-7947-44f9-8a50-6c42e0223ef6"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "53d65fc4-7947-44f9-8a50-6c42e0223ef6",
+                      "source_id": "uploaded-data",
+                      "run_id": "270b8841-d4ad-40fb-9edf-b3c9f049edca",
+                      "value": "linux",
+                      "extraction_evidence": {
+                        "pointer": "/computers/0/operatingsystems_name",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "os_version": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "53d65fc4-7947-44f9-8a50-6c42e0223ef6"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "53d65fc4-7947-44f9-8a50-6c42e0223ef6",
+                      "source_id": "uploaded-data",
+                      "run_id": "270b8841-d4ad-40fb-9edf-b3c9f049edca",
+                      "value": "24.04",
+                      "extraction_evidence": {
+                        "pointer": "/computers/0/operatingsystems_name",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "location": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "53d65fc4-7947-44f9-8a50-6c42e0223ef6"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "53d65fc4-7947-44f9-8a50-6c42e0223ef6",
+                      "source_id": "uploaded-data",
+                      "run_id": "270b8841-d4ad-40fb-9edf-b3c9f049edca",
+                      "value": "Test Branch",
+                      "extraction_evidence": {
+                        "pointer": "/computers/0/locations_name",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                }
+              },
+              "relationships": {
+                "data": [],
+                "total": 0,
+                "limit": 50,
+                "offset": 0
+              },
+              "provenance": {
+                "total": 1,
+                "data": [
+                  {
+                    "observation_id": "53d65fc4-7947-44f9-8a50-6c42e0223ef6",
+                    "source_id": "uploaded-data",
+                    "run_id": "270b8841-d4ad-40fb-9edf-b3c9f049edca",
+                    "record_key": "/ai/records/0",
+                    "observed_at": null,
+                    "resolution_status": "resolved",
+                    "origin": "ai",
+                    "attributes": {
+                      "hostname": "test-glpi-linux",
+                      "serial_number": "TEST-GLPI-303",
+                      "os_family": "linux",
+                      "os_version": "24.04",
+                      "location": "Test Branch"
+                    },
+                    "relation_type": null,
+                    "target_ci_id": null
+                  }
+                ]
+              },
+              "warnings": []
+            }
+          ],
+          "checks": {
+            "expected_entity": true,
+            "ai_provenance": true,
+            "replay": true,
+            "field_preservation": true
+          },
+          "passed": true
+        },
+        {
+          "file": "netbox_style.json",
+          "http_status": 200,
+          "ingestion": {
+            "run_id": "0935d3aa-67b7-4044-838e-4ef01fc30c9b",
+            "replayed": false,
+            "records": {
+              "received": 1,
+              "resolved": 1,
+              "quarantined": 0
+            },
+            "entities": {
+              "created": 1,
+              "updated": 0,
+              "unchanged": 0
+            },
+            "relationships": {
+              "created": 0,
+              "removed": 0,
+              "unchanged": 0
+            },
+            "warning_count": 0,
+            "warnings": [],
+            "unresolved_reference_count": 0
+          },
+          "inventory": {
+            "device": {
+              "data": [
+                {
+                  "id": "dbc06ceb-ee9b-4f16-aea6-58ce361467ed",
+                  "kind": "device",
+                  "display_name": "test-netbox-router",
+                  "is_reference": false,
+                  "created_at": "2026-11-02T20:28:55.785398Z",
+                  "updated_at": "2026-11-02T20:28:55.788789Z",
+                  "attributes": {
+                    "hostname": "test-netbox-router",
+                    "ip_address": "192.0.2.44",
+                    "mac_address": null,
+                    "serial_number": null,
+                    "os_family": null,
+                    "os_version": null,
+                    "location": "Test DC",
+                    "status": "active",
+                    "encrypted": null,
+                    "device_type": "Test Router",
+                    "department": null,
+                    "last_checkin": null
+                  },
+                  "has_conflicts": false,
+                  "assigned_user_id": null
+                }
+              ],
+              "total": 1,
+              "limit": 100,
+              "offset": 0
+            },
+            "user": {
+              "data": [],
+              "total": 0,
+              "limit": 100,
+              "offset": 0
+            },
+            "application": {
+              "data": [],
+              "total": 0,
+              "limit": 100,
+              "offset": 0
+            }
+          },
+          "details": [
+            {
+              "id": "dbc06ceb-ee9b-4f16-aea6-58ce361467ed",
+              "kind": "device",
+              "display_name": "test-netbox-router",
+              "is_reference": false,
+              "created_at": "2026-11-02T20:28:55.785398Z",
+              "updated_at": "2026-11-02T20:28:55.788789Z",
+              "attributes": {
+                "hostname": "test-netbox-router",
+                "ip_address": "192.0.2.44",
+                "mac_address": null,
+                "serial_number": null,
+                "os_family": null,
+                "os_version": null,
+                "location": "Test DC",
+                "status": "active",
+                "encrypted": null,
+                "device_type": "Test Router",
+                "department": null,
+                "last_checkin": null
+              },
+              "has_conflicts": false,
+              "assigned_user_id": null,
+              "identifiers": [
+                {
+                  "id": "f8a8ab3a-49f7-408a-a6ad-ad76325add17",
+                  "namespace": "[\"example-corp\",\"device\",\"uploaded-data\",\"device_id\"]",
+                  "value": "404"
+                }
+              ],
+              "field_state": {
+                "hostname": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "e1ae7024-90ee-45ff-895d-067d67e02c49"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "e1ae7024-90ee-45ff-895d-067d67e02c49",
+                      "source_id": "uploaded-data",
+                      "run_id": "0935d3aa-67b7-4044-838e-4ef01fc30c9b",
+                      "value": "test-netbox-router",
+                      "extraction_evidence": {
+                        "pointer": "/results/0/name",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "ip_address": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "e1ae7024-90ee-45ff-895d-067d67e02c49"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "e1ae7024-90ee-45ff-895d-067d67e02c49",
+                      "source_id": "uploaded-data",
+                      "run_id": "0935d3aa-67b7-4044-838e-4ef01fc30c9b",
+                      "value": "192.0.2.44",
+                      "extraction_evidence": {
+                        "pointer": "/results/0/primary_ip4/address",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "location": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "e1ae7024-90ee-45ff-895d-067d67e02c49"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "e1ae7024-90ee-45ff-895d-067d67e02c49",
+                      "source_id": "uploaded-data",
+                      "run_id": "0935d3aa-67b7-4044-838e-4ef01fc30c9b",
+                      "value": "Test DC",
+                      "extraction_evidence": {
+                        "pointer": "/results/0/site/name",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "status": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "e1ae7024-90ee-45ff-895d-067d67e02c49"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "e1ae7024-90ee-45ff-895d-067d67e02c49",
+                      "source_id": "uploaded-data",
+                      "run_id": "0935d3aa-67b7-4044-838e-4ef01fc30c9b",
+                      "value": "active",
+                      "extraction_evidence": {
+                        "pointer": "/results/0/status/value",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "device_type": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "e1ae7024-90ee-45ff-895d-067d67e02c49"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "e1ae7024-90ee-45ff-895d-067d67e02c49",
+                      "source_id": "uploaded-data",
+                      "run_id": "0935d3aa-67b7-4044-838e-4ef01fc30c9b",
+                      "value": "Test Router",
+                      "extraction_evidence": {
+                        "pointer": "/results/0/device_type/model",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                }
+              },
+              "relationships": {
+                "data": [],
+                "total": 0,
+                "limit": 50,
+                "offset": 0
+              },
+              "provenance": {
+                "total": 1,
+                "data": [
+                  {
+                    "observation_id": "e1ae7024-90ee-45ff-895d-067d67e02c49",
+                    "source_id": "uploaded-data",
+                    "run_id": "0935d3aa-67b7-4044-838e-4ef01fc30c9b",
+                    "record_key": "/ai/records/0",
+                    "observed_at": null,
+                    "resolution_status": "resolved",
+                    "origin": "ai",
+                    "attributes": {
+                      "hostname": "test-netbox-router",
+                      "ip_address": "192.0.2.44",
+                      "location": "Test DC",
+                      "status": "active",
+                      "device_type": "Test Router"
+                    },
+                    "relation_type": null,
+                    "target_ci_id": null
+                  }
+                ]
+              },
+              "warnings": []
+            }
+          ],
+          "checks": {
+            "expected_entity": true,
+            "ai_provenance": true,
+            "replay": true,
+            "field_preservation": true
+          },
+          "passed": true
+        },
+        {
+          "file": "github_style.json",
+          "http_status": 502,
+          "ingestion": {
+            "error": {
+              "code": "ai_invalid_response",
+              "message": "AI extraction failed schema or evidence validation; no data was saved.",
+              "request_id": "22202629-a5b8-4d36-937e-45113ddb5e23",
+              "details": [
+                {
+                  "path": "/records/0/relationships/0/evidence",
+                  "type": "invalid_evidence",
+                  "message": "Evidence must exist in the input and belong to its source record."
+                }
+              ]
+            }
+          },
+          "passed": false
+        },
+        {
+          "file": "jira_style.json",
+          "http_status": 200,
+          "ingestion": {
+            "run_id": "22bc20da-7a8f-4731-93a4-e95529740a00",
+            "replayed": false,
+            "records": {
+              "received": 1,
+              "resolved": 1,
+              "quarantined": 0
+            },
+            "entities": {
+              "created": 1,
+              "updated": 0,
+              "unchanged": 0
+            },
+            "relationships": {
+              "created": 0,
+              "removed": 0,
+              "unchanged": 0
+            },
+            "warning_count": 0,
+            "warnings": [],
+            "unresolved_reference_count": 0
+          },
+          "inventory": {
+            "device": {
+              "data": [],
+              "total": 0,
+              "limit": 100,
+              "offset": 0
+            },
+            "user": {
+              "data": [],
+              "total": 0,
+              "limit": 100,
+              "offset": 0
+            },
+            "application": {
+              "data": [
+                {
+                  "id": "9adc2914-ac8c-4fe7-9cf7-8890aec0c70d",
+                  "kind": "application",
+                  "display_name": "Jira",
+                  "is_reference": false,
+                  "created_at": "2026-11-02T20:29:10.847176Z",
+                  "updated_at": "2026-11-02T20:29:10.851030Z",
+                  "attributes": {
+                    "name": "Jira",
+                    "app_type": "saas",
+                    "vendor": null,
+                    "category": null,
+                    "deployment": null,
+                    "owner_team": null,
+                    "reported_user_count": null,
+                    "sso_enabled": null
+                  },
+                  "has_conflicts": false,
+                  "observed_assignment_count": 0,
+                  "owner_user_ids": []
+                }
+              ],
+              "total": 1,
+              "limit": 100,
+              "offset": 0
+            }
+          },
+          "details": [
+            {
+              "id": "9adc2914-ac8c-4fe7-9cf7-8890aec0c70d",
+              "kind": "application",
+              "display_name": "Jira",
+              "is_reference": false,
+              "created_at": "2026-11-02T20:29:10.847176Z",
+              "updated_at": "2026-11-02T20:29:10.851030Z",
+              "attributes": {
+                "name": "Jira",
+                "app_type": "saas",
+                "vendor": null,
+                "category": null,
+                "deployment": null,
+                "owner_team": null,
+                "reported_user_count": null,
+                "sso_enabled": null
+              },
+              "has_conflicts": false,
+              "observed_assignment_count": 0,
+              "owner_user_ids": [],
+              "identifiers": [
+                {
+                  "id": "0122c725-8fb4-45e7-95e9-9a9a9a5b3f73",
+                  "namespace": "[\"example-corp\",\"application\",\"uploaded-data\",\"app_id\"]",
+                  "value": "TEST-JIRA"
+                }
+              ],
+              "field_state": {
+                "name": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "e46aa292-8e08-44b7-994c-aa7519315160"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "e46aa292-8e08-44b7-994c-aa7519315160",
+                      "source_id": "uploaded-data",
+                      "run_id": "22bc20da-7a8f-4731-93a4-e95529740a00",
+                      "value": "Jira",
+                      "extraction_evidence": {
+                        "pointer": "/application/name",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "app_type": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "e46aa292-8e08-44b7-994c-aa7519315160"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "e46aa292-8e08-44b7-994c-aa7519315160",
+                      "source_id": "uploaded-data",
+                      "run_id": "22bc20da-7a8f-4731-93a4-e95529740a00",
+                      "value": "saas",
+                      "extraction_evidence": {
+                        "pointer": "/application/type",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                }
+              },
+              "relationships": {
+                "data": [],
+                "total": 0,
+                "limit": 50,
+                "offset": 0
+              },
+              "provenance": {
+                "total": 1,
+                "data": [
+                  {
+                    "observation_id": "e46aa292-8e08-44b7-994c-aa7519315160",
+                    "source_id": "uploaded-data",
+                    "run_id": "22bc20da-7a8f-4731-93a4-e95529740a00",
+                    "record_key": "/ai/records/0",
+                    "observed_at": null,
+                    "resolution_status": "resolved",
+                    "origin": "ai",
+                    "attributes": {
+                      "name": "Jira",
+                      "app_type": "saas"
+                    },
+                    "relation_type": null,
+                    "target_ci_id": null
+                  }
+                ]
+              },
+              "warnings": []
+            }
+          ],
+          "checks": {
+            "expected_entity": true,
+            "ai_provenance": true,
+            "replay": true,
+            "field_preservation": true
+          },
+          "passed": true
+        },
+        {
+          "file": "salesforce_style.json",
+          "http_status": 502,
+          "ingestion": {
+            "error": {
+              "code": "ai_invalid_response",
+              "message": "AI extraction failed schema or evidence validation; no data was saved.",
+              "request_id": "57b4af5e-add3-45aa-a115-169f37bec4ab",
+              "details": [
+                {
+                  "path": "/records/0/attributes/reported_user_count/evidence",
+                  "type": "invalid_evidence",
+                  "message": "Evidence must exist in the input and belong to its source record."
+                }
+              ]
+            }
+          },
+          "passed": false
+        },
+        {
+          "file": "workday_style.json",
+          "http_status": 200,
+          "ingestion": {
+            "run_id": "faaf7e53-9fb7-48f8-ad1d-3f28c886216e",
+            "replayed": false,
+            "records": {
+              "received": 2,
+              "resolved": 2,
+              "quarantined": 0
+            },
+            "entities": {
+              "created": 2,
+              "updated": 0,
+              "unchanged": 0
+            },
+            "relationships": {
+              "created": 0,
+              "removed": 0,
+              "unchanged": 0
+            },
+            "warning_count": 0,
+            "warnings": [],
+            "unresolved_reference_count": 0
+          },
+          "inventory": {
+            "device": {
+              "data": [],
+              "total": 0,
+              "limit": 100,
+              "offset": 0
+            },
+            "user": {
+              "data": [
+                {
+                  "id": "98bf516c-5204-4654-88e4-7e67d0a937ec",
+                  "kind": "user",
+                  "display_name": "Test HR User",
+                  "is_reference": false,
+                  "created_at": "2026-11-02T20:29:32.137694Z",
+                  "updated_at": "2026-11-02T20:29:32.143386Z",
+                  "attributes": {
+                    "name": "Test HR User",
+                    "email": "hr@example.test",
+                    "team": "Test People Team",
+                    "department": null,
+                    "title": null,
+                    "status": "active",
+                    "mfa_enabled": null,
+                    "last_login": null,
+                    "groups": []
+                  },
+                  "has_conflicts": false
+                }
+              ],
+              "total": 1,
+              "limit": 100,
+              "offset": 0
+            },
+            "application": {
+              "data": [
+                {
+                  "id": "357a9080-358b-47a0-8aff-8c654dbc97ff",
+                  "kind": "application",
+                  "display_name": "Workday",
+                  "is_reference": false,
+                  "created_at": "2026-11-02T20:29:32.137698Z",
+                  "updated_at": "2026-11-02T20:29:32.143406Z",
+                  "attributes": {
+                    "name": "Workday",
+                    "app_type": "saas",
+                    "vendor": null,
+                    "category": null,
+                    "deployment": null,
+                    "owner_team": null,
+                    "reported_user_count": null,
+                    "sso_enabled": null
+                  },
+                  "has_conflicts": false,
+                  "observed_assignment_count": 0,
+                  "owner_user_ids": []
+                }
+              ],
+              "total": 1,
+              "limit": 100,
+              "offset": 0
+            }
+          },
+          "details": [
+            {
+              "id": "98bf516c-5204-4654-88e4-7e67d0a937ec",
+              "kind": "user",
+              "display_name": "Test HR User",
+              "is_reference": false,
+              "created_at": "2026-11-02T20:29:32.137694Z",
+              "updated_at": "2026-11-02T20:29:32.143386Z",
+              "attributes": {
+                "name": "Test HR User",
+                "email": "hr@example.test",
+                "team": "Test People Team",
+                "department": null,
+                "title": null,
+                "status": "active",
+                "mfa_enabled": null,
+                "last_login": null,
+                "groups": []
+              },
+              "has_conflicts": false,
+              "identifiers": [
+                {
+                  "id": "1c238c1b-362a-4ff1-bb4f-1cc21abdee33",
+                  "namespace": "[\"example-corp\",\"user\",\"uploaded-data\",\"employee_id\"]",
+                  "value": "TEST-W808"
+                }
+              ],
+              "field_state": {
+                "name": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "63a87f13-9aca-4677-8df1-7de16b68ef5d"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "63a87f13-9aca-4677-8df1-7de16b68ef5d",
+                      "source_id": "uploaded-data",
+                      "run_id": "faaf7e53-9fb7-48f8-ad1d-3f28c886216e",
+                      "value": "Test HR User",
+                      "extraction_evidence": {
+                        "pointer": "/Report_Entry/0/Legal_Name",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "email": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "63a87f13-9aca-4677-8df1-7de16b68ef5d"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "63a87f13-9aca-4677-8df1-7de16b68ef5d",
+                      "source_id": "uploaded-data",
+                      "run_id": "faaf7e53-9fb7-48f8-ad1d-3f28c886216e",
+                      "value": "hr@example.test",
+                      "extraction_evidence": {
+                        "pointer": "/Report_Entry/0/Email_Address",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "team": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "63a87f13-9aca-4677-8df1-7de16b68ef5d"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "63a87f13-9aca-4677-8df1-7de16b68ef5d",
+                      "source_id": "uploaded-data",
+                      "run_id": "faaf7e53-9fb7-48f8-ad1d-3f28c886216e",
+                      "value": "Test People Team",
+                      "extraction_evidence": {
+                        "pointer": "/Report_Entry/0/Organization",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "status": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "63a87f13-9aca-4677-8df1-7de16b68ef5d"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "63a87f13-9aca-4677-8df1-7de16b68ef5d",
+                      "source_id": "uploaded-data",
+                      "run_id": "faaf7e53-9fb7-48f8-ad1d-3f28c886216e",
+                      "value": "active",
+                      "extraction_evidence": {
+                        "pointer": "/Report_Entry/0/Active",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                }
+              },
+              "relationships": {
+                "data": [],
+                "total": 0,
+                "limit": 50,
+                "offset": 0
+              },
+              "provenance": {
+                "total": 1,
+                "data": [
+                  {
+                    "observation_id": "63a87f13-9aca-4677-8df1-7de16b68ef5d",
+                    "source_id": "uploaded-data",
+                    "run_id": "faaf7e53-9fb7-48f8-ad1d-3f28c886216e",
+                    "record_key": "/ai/records/0",
+                    "observed_at": null,
+                    "resolution_status": "resolved",
+                    "origin": "ai",
+                    "attributes": {
+                      "name": "Test HR User",
+                      "email": "hr@example.test",
+                      "team": "Test People Team",
+                      "status": "active"
+                    },
+                    "relation_type": null,
+                    "target_ci_id": null
+                  }
+                ]
+              },
+              "warnings": []
+            },
+            {
+              "id": "357a9080-358b-47a0-8aff-8c654dbc97ff",
+              "kind": "application",
+              "display_name": "Workday",
+              "is_reference": false,
+              "created_at": "2026-11-02T20:29:32.137698Z",
+              "updated_at": "2026-11-02T20:29:32.143406Z",
+              "attributes": {
+                "name": "Workday",
+                "app_type": "saas",
+                "vendor": null,
+                "category": null,
+                "deployment": null,
+                "owner_team": null,
+                "reported_user_count": null,
+                "sso_enabled": null
+              },
+              "has_conflicts": false,
+              "observed_assignment_count": 0,
+              "owner_user_ids": [],
+              "identifiers": [
+                {
+                  "id": "a9557e6a-bf7a-4217-bbbe-086c8e60b378",
+                  "namespace": "[\"example-corp\",\"application\",\"uploaded-data\",\"app_id\"]",
+                  "value": "TEST-WORKDAY"
+                }
+              ],
+              "field_state": {
+                "name": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "a5eeb5d8-87bb-4634-a6d2-4c5d6bde2ed0"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "a5eeb5d8-87bb-4634-a6d2-4c5d6bde2ed0",
+                      "source_id": "uploaded-data",
+                      "run_id": "faaf7e53-9fb7-48f8-ad1d-3f28c886216e",
+                      "value": "Workday",
+                      "extraction_evidence": {
+                        "pointer": "/application/name",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "app_type": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "a5eeb5d8-87bb-4634-a6d2-4c5d6bde2ed0"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "a5eeb5d8-87bb-4634-a6d2-4c5d6bde2ed0",
+                      "source_id": "uploaded-data",
+                      "run_id": "faaf7e53-9fb7-48f8-ad1d-3f28c886216e",
+                      "value": "saas",
+                      "extraction_evidence": {
+                        "pointer": "/application/type",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                }
+              },
+              "relationships": {
+                "data": [],
+                "total": 0,
+                "limit": 50,
+                "offset": 0
+              },
+              "provenance": {
+                "total": 1,
+                "data": [
+                  {
+                    "observation_id": "a5eeb5d8-87bb-4634-a6d2-4c5d6bde2ed0",
+                    "source_id": "uploaded-data",
+                    "run_id": "faaf7e53-9fb7-48f8-ad1d-3f28c886216e",
+                    "record_key": "/ai/records/1",
+                    "observed_at": null,
+                    "resolution_status": "resolved",
+                    "origin": "ai",
+                    "attributes": {
+                      "name": "Workday",
+                      "app_type": "saas"
+                    },
+                    "relation_type": null,
+                    "target_ci_id": null
+                  }
+                ]
+              },
+              "warnings": []
+            }
+          ],
+          "checks": {
+            "expected_entity": true,
+            "ai_provenance": true,
+            "replay": true,
+            "field_preservation": true,
+            "missing_mfa_unknown": true
+          },
+          "passed": true
+        },
+        {
+          "file": "slack_style.json",
+          "http_status": 200,
+          "ingestion": {
+            "run_id": "b83e37d0-c945-4237-b4b2-5ce53809e147",
+            "replayed": false,
+            "records": {
+              "received": 2,
+              "resolved": 2,
+              "quarantined": 0
+            },
+            "entities": {
+              "created": 2,
+              "updated": 0,
+              "unchanged": 0
+            },
+            "relationships": {
+              "created": 0,
+              "removed": 0,
+              "unchanged": 0
+            },
+            "warning_count": 0,
+            "warnings": [],
+            "unresolved_reference_count": 0
+          },
+          "inventory": {
+            "device": {
+              "data": [],
+              "total": 0,
+              "limit": 100,
+              "offset": 0
+            },
+            "user": {
+              "data": [
+                {
+                  "id": "e20d2b17-ecf7-44c5-964d-85aa946b5e9e",
+                  "kind": "user",
+                  "display_name": "Test Slack User",
+                  "is_reference": false,
+                  "created_at": "2026-11-02T20:29:38.257905Z",
+                  "updated_at": "2026-11-02T20:29:38.264667Z",
+                  "attributes": {
+                    "name": "Test Slack User",
+                    "email": "slack@example.test",
+                    "team": null,
+                    "department": null,
+                    "title": null,
+                    "status": "active",
+                    "mfa_enabled": null,
+                    "last_login": null,
+                    "groups": []
+                  },
+                  "has_conflicts": false
+                }
+              ],
+              "total": 1,
+              "limit": 100,
+              "offset": 0
+            },
+            "application": {
+              "data": [
+                {
+                  "id": "03ab01a9-8d4e-4e4f-8029-cf6720e7ace5",
+                  "kind": "application",
+                  "display_name": "Slack",
+                  "is_reference": false,
+                  "created_at": "2026-11-02T20:29:38.257915Z",
+                  "updated_at": "2026-11-02T20:29:38.264688Z",
+                  "attributes": {
+                    "name": "Slack",
+                    "app_type": "saas",
+                    "vendor": null,
+                    "category": null,
+                    "deployment": null,
+                    "owner_team": null,
+                    "reported_user_count": null,
+                    "sso_enabled": null
+                  },
+                  "has_conflicts": false,
+                  "observed_assignment_count": 0,
+                  "owner_user_ids": []
+                }
+              ],
+              "total": 1,
+              "limit": 100,
+              "offset": 0
+            }
+          },
+          "details": [
+            {
+              "id": "e20d2b17-ecf7-44c5-964d-85aa946b5e9e",
+              "kind": "user",
+              "display_name": "Test Slack User",
+              "is_reference": false,
+              "created_at": "2026-11-02T20:29:38.257905Z",
+              "updated_at": "2026-11-02T20:29:38.264667Z",
+              "attributes": {
+                "name": "Test Slack User",
+                "email": "slack@example.test",
+                "team": null,
+                "department": null,
+                "title": null,
+                "status": "active",
+                "mfa_enabled": null,
+                "last_login": null,
+                "groups": []
+              },
+              "has_conflicts": false,
+              "identifiers": [
+                {
+                  "id": "0df12cce-3454-4c8a-a103-3d3fe66a723d",
+                  "namespace": "[\"example-corp\",\"user\",\"uploaded-data\",\"user_id\"]",
+                  "value": "TEST-U909"
+                }
+              ],
+              "field_state": {
+                "name": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "cfbbdeeb-0343-4e93-8f2c-f42b00749bdd"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "cfbbdeeb-0343-4e93-8f2c-f42b00749bdd",
+                      "source_id": "uploaded-data",
+                      "run_id": "b83e37d0-c945-4237-b4b2-5ce53809e147",
+                      "value": "Test Slack User",
+                      "extraction_evidence": {
+                        "pointer": "/members/0/profile/real_name",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "email": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "cfbbdeeb-0343-4e93-8f2c-f42b00749bdd"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "cfbbdeeb-0343-4e93-8f2c-f42b00749bdd",
+                      "source_id": "uploaded-data",
+                      "run_id": "b83e37d0-c945-4237-b4b2-5ce53809e147",
+                      "value": "slack@example.test",
+                      "extraction_evidence": {
+                        "pointer": "/members/0/profile/email",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "status": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "cfbbdeeb-0343-4e93-8f2c-f42b00749bdd"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "cfbbdeeb-0343-4e93-8f2c-f42b00749bdd",
+                      "source_id": "uploaded-data",
+                      "run_id": "b83e37d0-c945-4237-b4b2-5ce53809e147",
+                      "value": "active",
+                      "extraction_evidence": {
+                        "pointer": "/members/0/deleted",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                }
+              },
+              "relationships": {
+                "data": [],
+                "total": 0,
+                "limit": 50,
+                "offset": 0
+              },
+              "provenance": {
+                "total": 1,
+                "data": [
+                  {
+                    "observation_id": "cfbbdeeb-0343-4e93-8f2c-f42b00749bdd",
+                    "source_id": "uploaded-data",
+                    "run_id": "b83e37d0-c945-4237-b4b2-5ce53809e147",
+                    "record_key": "/ai/records/0",
+                    "observed_at": null,
+                    "resolution_status": "resolved",
+                    "origin": "ai",
+                    "attributes": {
+                      "name": "Test Slack User",
+                      "email": "slack@example.test",
+                      "status": "active"
+                    },
+                    "relation_type": null,
+                    "target_ci_id": null
+                  }
+                ]
+              },
+              "warnings": []
+            },
+            {
+              "id": "03ab01a9-8d4e-4e4f-8029-cf6720e7ace5",
+              "kind": "application",
+              "display_name": "Slack",
+              "is_reference": false,
+              "created_at": "2026-11-02T20:29:38.257915Z",
+              "updated_at": "2026-11-02T20:29:38.264688Z",
+              "attributes": {
+                "name": "Slack",
+                "app_type": "saas",
+                "vendor": null,
+                "category": null,
+                "deployment": null,
+                "owner_team": null,
+                "reported_user_count": null,
+                "sso_enabled": null
+              },
+              "has_conflicts": false,
+              "observed_assignment_count": 0,
+              "owner_user_ids": [],
+              "identifiers": [
+                {
+                  "id": "e00f1cda-d04a-4b1d-a561-ff46b5b57426",
+                  "namespace": "[\"example-corp\",\"application\",\"uploaded-data\",\"app_id\"]",
+                  "value": "TEST-SLACK"
+                }
+              ],
+              "field_state": {
+                "name": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "1c2b3e67-2e52-47b7-9aa9-da715d51c746"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "1c2b3e67-2e52-47b7-9aa9-da715d51c746",
+                      "source_id": "uploaded-data",
+                      "run_id": "b83e37d0-c945-4237-b4b2-5ce53809e147",
+                      "value": "Slack",
+                      "extraction_evidence": {
+                        "pointer": "/application/name",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "app_type": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "1c2b3e67-2e52-47b7-9aa9-da715d51c746"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "1c2b3e67-2e52-47b7-9aa9-da715d51c746",
+                      "source_id": "uploaded-data",
+                      "run_id": "b83e37d0-c945-4237-b4b2-5ce53809e147",
+                      "value": "saas",
+                      "extraction_evidence": {
+                        "pointer": "/application/type",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                }
+              },
+              "relationships": {
+                "data": [],
+                "total": 0,
+                "limit": 50,
+                "offset": 0
+              },
+              "provenance": {
+                "total": 1,
+                "data": [
+                  {
+                    "observation_id": "1c2b3e67-2e52-47b7-9aa9-da715d51c746",
+                    "source_id": "uploaded-data",
+                    "run_id": "b83e37d0-c945-4237-b4b2-5ce53809e147",
+                    "record_key": "/ai/records/1",
+                    "observed_at": null,
+                    "resolution_status": "resolved",
+                    "origin": "ai",
+                    "attributes": {
+                      "name": "Slack",
+                      "app_type": "saas"
+                    },
+                    "relation_type": null,
+                    "target_ci_id": null
+                  }
+                ]
+              },
+              "warnings": []
+            }
+          ],
+          "checks": {
+            "expected_entity": true,
+            "ai_provenance": true,
+            "replay": true,
+            "field_preservation": true,
+            "missing_mfa_unknown": true
+          },
+          "passed": true
+        },
+        {
+          "file": "snmp_style.csv",
+          "http_status": 200,
+          "ingestion": {
+            "run_id": "29fd3a2b-fc8f-47b5-9220-2a6df611bbbd",
+            "replayed": false,
+            "records": {
+              "received": 1,
+              "resolved": 1,
+              "quarantined": 0
+            },
+            "entities": {
+              "created": 1,
+              "updated": 0,
+              "unchanged": 0
+            },
+            "relationships": {
+              "created": 0,
+              "removed": 0,
+              "unchanged": 0
+            },
+            "warning_count": 0,
+            "warnings": [],
+            "unresolved_reference_count": 0
+          },
+          "inventory": {
+            "device": {
+              "data": [
+                {
+                  "id": "3f2bd1b6-3ca4-4f52-9c71-9454ab0b6416",
+                  "kind": "device",
+                  "display_name": "test-snmp-switch",
+                  "is_reference": false,
+                  "created_at": "2026-11-02T20:29:42.118555Z",
+                  "updated_at": "2026-11-02T20:29:42.122217Z",
+                  "attributes": {
+                    "hostname": "test-snmp-switch",
+                    "ip_address": "192.0.2.55",
+                    "mac_address": "02:00:00:00:00:01",
+                    "serial_number": null,
+                    "os_family": "linux",
+                    "os_version": null,
+                    "location": "Test Rack 4",
+                    "status": "unknown",
+                    "encrypted": null,
+                    "device_type": null,
+                    "department": null,
+                    "last_checkin": null
+                  },
+                  "has_conflicts": false,
+                  "assigned_user_id": null
+                }
+              ],
+              "total": 1,
+              "limit": 100,
+              "offset": 0
+            },
+            "user": {
+              "data": [],
+              "total": 0,
+              "limit": 100,
+              "offset": 0
+            },
+            "application": {
+              "data": [],
+              "total": 0,
+              "limit": 100,
+              "offset": 0
+            }
+          },
+          "details": [
+            {
+              "id": "3f2bd1b6-3ca4-4f52-9c71-9454ab0b6416",
+              "kind": "device",
+              "display_name": "test-snmp-switch",
+              "is_reference": false,
+              "created_at": "2026-11-02T20:29:42.118555Z",
+              "updated_at": "2026-11-02T20:29:42.122217Z",
+              "attributes": {
+                "hostname": "test-snmp-switch",
+                "ip_address": "192.0.2.55",
+                "mac_address": "02:00:00:00:00:01",
+                "serial_number": null,
+                "os_family": "linux",
+                "os_version": null,
+                "location": "Test Rack 4",
+                "status": "unknown",
+                "encrypted": null,
+                "device_type": null,
+                "department": null,
+                "last_checkin": null
+              },
+              "has_conflicts": false,
+              "assigned_user_id": null,
+              "identifiers": [
+                {
+                  "id": "49723485-3e79-48c0-8d43-8b0151f9b0a7",
+                  "namespace": "[\"example-corp\",\"device\",\"uploaded-data\",\"device_id\"]",
+                  "value": "TEST-SNMP-1"
+                }
+              ],
+              "field_state": {
+                "hostname": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "5bf78a31-6a2e-44f6-a31c-317a29d8fa38"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "5bf78a31-6a2e-44f6-a31c-317a29d8fa38",
+                      "source_id": "uploaded-data",
+                      "run_id": "29fd3a2b-fc8f-47b5-9220-2a6df611bbbd",
+                      "value": "test-snmp-switch",
+                      "extraction_evidence": {
+                        "pointer": "/rows/0/sysName",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "ip_address": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "5bf78a31-6a2e-44f6-a31c-317a29d8fa38"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "5bf78a31-6a2e-44f6-a31c-317a29d8fa38",
+                      "source_id": "uploaded-data",
+                      "run_id": "29fd3a2b-fc8f-47b5-9220-2a6df611bbbd",
+                      "value": "192.0.2.55",
+                      "extraction_evidence": {
+                        "pointer": "/rows/0/management_address",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "mac_address": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "5bf78a31-6a2e-44f6-a31c-317a29d8fa38"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "5bf78a31-6a2e-44f6-a31c-317a29d8fa38",
+                      "source_id": "uploaded-data",
+                      "run_id": "29fd3a2b-fc8f-47b5-9220-2a6df611bbbd",
+                      "value": "02:00:00:00:00:01",
+                      "extraction_evidence": {
+                        "pointer": "/rows/0/ifPhysAddress",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "os_family": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "5bf78a31-6a2e-44f6-a31c-317a29d8fa38"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "5bf78a31-6a2e-44f6-a31c-317a29d8fa38",
+                      "source_id": "uploaded-data",
+                      "run_id": "29fd3a2b-fc8f-47b5-9220-2a6df611bbbd",
+                      "value": "linux",
+                      "extraction_evidence": {
+                        "pointer": "/rows/0/sysDescr",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "location": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "5bf78a31-6a2e-44f6-a31c-317a29d8fa38"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "5bf78a31-6a2e-44f6-a31c-317a29d8fa38",
+                      "source_id": "uploaded-data",
+                      "run_id": "29fd3a2b-fc8f-47b5-9220-2a6df611bbbd",
+                      "value": "Test Rack 4",
+                      "extraction_evidence": {
+                        "pointer": "/rows/0/sysLocation",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "status": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "5bf78a31-6a2e-44f6-a31c-317a29d8fa38"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "5bf78a31-6a2e-44f6-a31c-317a29d8fa38",
+                      "source_id": "uploaded-data",
+                      "run_id": "29fd3a2b-fc8f-47b5-9220-2a6df611bbbd",
+                      "value": "unknown",
+                      "extraction_evidence": {
+                        "pointer": "/rows/0/sysDescr",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                }
+              },
+              "relationships": {
+                "data": [],
+                "total": 0,
+                "limit": 50,
+                "offset": 0
+              },
+              "provenance": {
+                "total": 1,
+                "data": [
+                  {
+                    "observation_id": "5bf78a31-6a2e-44f6-a31c-317a29d8fa38",
+                    "source_id": "uploaded-data",
+                    "run_id": "29fd3a2b-fc8f-47b5-9220-2a6df611bbbd",
+                    "record_key": "/ai/records/0",
+                    "observed_at": null,
+                    "resolution_status": "resolved",
+                    "origin": "ai",
+                    "attributes": {
+                      "hostname": "test-snmp-switch",
+                      "ip_address": "192.0.2.55",
+                      "mac_address": "02:00:00:00:00:01",
+                      "os_family": "linux",
+                      "location": "Test Rack 4",
+                      "status": "unknown"
+                    },
+                    "relation_type": null,
+                    "target_ci_id": null
+                  }
+                ]
+              },
+              "warnings": []
+            }
+          ],
+          "checks": {
+            "expected_entity": true,
+            "ai_provenance": true,
+            "replay": true,
+            "field_preservation": true
+          },
+          "passed": true
+        },
+        {
+          "summary": true,
+          "passed": 8,
+          "total": 10
+        }
+      ]
+    },
+    {
+      "revision": "cross_table_scope_guidance",
+      "results": [
+        {
+          "file": "github_style.json",
+          "extraction_version": "extraction-v7",
+          "model": "openai/gpt-4o-mini",
+          "http_status": 502,
+          "ingestion": {
+            "error": {
+              "code": "ai_invalid_response",
+              "message": "AI extraction failed schema or evidence validation; no data was saved.",
+              "request_id": "aa9c06ef-5264-4298-a909-cb6de2e166b0",
+              "details": [
+                {
+                  "path": "/records/0/relationships/0/evidence",
+                  "type": "invalid_evidence",
+                  "message": "Evidence must exist in the input and belong to its source record."
+                }
+              ]
+            }
+          },
+          "passed": false
+        },
+        {
+          "file": "salesforce_style.json",
+          "extraction_version": "extraction-v7",
+          "model": "openai/gpt-4o-mini",
+          "http_status": 200,
+          "ingestion": {
+            "run_id": "92c971d3-ea71-4cfe-893c-ff8319e69f3a",
+            "replayed": false,
+            "records": {
+              "received": 2,
+              "resolved": 2,
+              "quarantined": 0
+            },
+            "entities": {
+              "created": 2,
+              "updated": 0,
+              "unchanged": 0
+            },
+            "relationships": {
+              "created": 1,
+              "removed": 0,
+              "unchanged": 0
+            },
+            "warning_count": 0,
+            "warnings": [],
+            "unresolved_reference_count": 0
+          },
+          "inventory": {
+            "device": {
+              "data": [],
+              "total": 0,
+              "limit": 100,
+              "offset": 0
+            },
+            "user": {
+              "data": [
+                {
+                  "id": "2d4e4dff-3d6f-477f-8fa5-3bba987871c3",
+                  "kind": "user",
+                  "display_name": "Test Sales User",
+                  "is_reference": false,
+                  "created_at": "2026-11-02T20:37:14.295061Z",
+                  "updated_at": "2026-11-02T20:37:14.307254Z",
+                  "attributes": {
+                    "name": "Test Sales User",
+                    "email": "sales@example.test",
+                    "team": null,
+                    "department": null,
+                    "title": null,
+                    "status": "active",
+                    "mfa_enabled": null,
+                    "last_login": "2026-10-30T09:00:00Z",
+                    "groups": []
+                  },
+                  "has_conflicts": false
+                }
+              ],
+              "total": 1,
+              "limit": 100,
+              "offset": 0
+            },
+            "application": {
+              "data": [
+                {
+                  "id": "a389d3db-64df-425a-b008-40cd74681bb4",
+                  "kind": "application",
+                  "display_name": "Salesforce",
+                  "is_reference": false,
+                  "created_at": "2026-11-02T20:37:14.295050Z",
+                  "updated_at": "2026-11-02T20:37:14.304040Z",
+                  "attributes": {
+                    "name": "Salesforce",
+                    "app_type": "saas",
+                    "vendor": null,
+                    "category": null,
+                    "deployment": null,
+                    "owner_team": null,
+                    "reported_user_count": null,
+                    "sso_enabled": null
+                  },
+                  "has_conflicts": false,
+                  "observed_assignment_count": 1,
+                  "owner_user_ids": []
+                }
+              ],
+              "total": 1,
+              "limit": 100,
+              "offset": 0
+            }
+          },
+          "details": [
+            {
+              "id": "2d4e4dff-3d6f-477f-8fa5-3bba987871c3",
+              "kind": "user",
+              "display_name": "Test Sales User",
+              "is_reference": false,
+              "created_at": "2026-11-02T20:37:14.295061Z",
+              "updated_at": "2026-11-02T20:37:14.307254Z",
+              "attributes": {
+                "name": "Test Sales User",
+                "email": "sales@example.test",
+                "team": null,
+                "department": null,
+                "title": null,
+                "status": "active",
+                "mfa_enabled": null,
+                "last_login": "2026-10-30T09:00:00Z",
+                "groups": []
+              },
+              "has_conflicts": false,
+              "identifiers": [
+                {
+                  "id": "ded68f3e-a31e-4105-8dc3-c2fbf597771f",
+                  "namespace": "[\"example-corp\",\"user\",\"uploaded-data\",\"user_id\"]",
+                  "value": "TEST-SF-U707"
+                }
+              ],
+              "field_state": {
+                "name": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "713e00d4-d144-438d-989e-b12c93963527"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "713e00d4-d144-438d-989e-b12c93963527",
+                      "source_id": "uploaded-data",
+                      "run_id": "92c971d3-ea71-4cfe-893c-ff8319e69f3a",
+                      "value": "Test Sales User",
+                      "extraction_evidence": {
+                        "pointer": "/records/0/Name",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "email": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "713e00d4-d144-438d-989e-b12c93963527"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "713e00d4-d144-438d-989e-b12c93963527",
+                      "source_id": "uploaded-data",
+                      "run_id": "92c971d3-ea71-4cfe-893c-ff8319e69f3a",
+                      "value": "sales@example.test",
+                      "extraction_evidence": {
+                        "pointer": "/records/0/Email",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "status": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "713e00d4-d144-438d-989e-b12c93963527"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "713e00d4-d144-438d-989e-b12c93963527",
+                      "source_id": "uploaded-data",
+                      "run_id": "92c971d3-ea71-4cfe-893c-ff8319e69f3a",
+                      "value": "active",
+                      "extraction_evidence": {
+                        "pointer": "/records/0/IsActive",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "last_login": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "713e00d4-d144-438d-989e-b12c93963527"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "713e00d4-d144-438d-989e-b12c93963527",
+                      "source_id": "uploaded-data",
+                      "run_id": "92c971d3-ea71-4cfe-893c-ff8319e69f3a",
+                      "value": "2026-10-30T09:00:00Z",
+                      "extraction_evidence": {
+                        "pointer": "/records/0/LastLoginDate",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                }
+              },
+              "relationships": {
+                "data": [
+                  {
+                    "id": "574e6036-5a27-4267-84a4-71d015b86e50",
+                    "direction": "out",
+                    "relation_type": "uses",
+                    "other_ci_id": "a389d3db-64df-425a-b008-40cd74681bb4"
+                  }
+                ],
+                "total": 1,
+                "limit": 50,
+                "offset": 0
+              },
+              "provenance": {
+                "total": 2,
+                "data": [
+                  {
+                    "observation_id": "713e00d4-d144-438d-989e-b12c93963527",
+                    "source_id": "uploaded-data",
+                    "run_id": "92c971d3-ea71-4cfe-893c-ff8319e69f3a",
+                    "record_key": "/ai/records/1",
+                    "observed_at": null,
+                    "resolution_status": "resolved",
+                    "origin": "ai",
+                    "attributes": {
+                      "name": "Test Sales User",
+                      "email": "sales@example.test",
+                      "status": "active",
+                      "last_login": "2026-10-30T09:00:00Z"
+                    },
+                    "relation_type": null,
+                    "target_ci_id": null
+                  },
+                  {
+                    "observation_id": "9fb1ed79-d820-46ee-9954-973434df2398",
+                    "source_id": "uploaded-data",
+                    "run_id": "92c971d3-ea71-4cfe-893c-ff8319e69f3a",
+                    "record_key": "/ai/records/1/_cmdb/relationships/0",
+                    "observed_at": null,
+                    "resolution_status": "resolved",
+                    "origin": "ai",
+                    "attributes": {},
+                    "relation_type": "uses",
+                    "target_ci_id": "a389d3db-64df-425a-b008-40cd74681bb4"
+                  }
+                ]
+              },
+              "warnings": []
+            },
+            {
+              "id": "a389d3db-64df-425a-b008-40cd74681bb4",
+              "kind": "application",
+              "display_name": "Salesforce",
+              "is_reference": false,
+              "created_at": "2026-11-02T20:37:14.295050Z",
+              "updated_at": "2026-11-02T20:37:14.304040Z",
+              "attributes": {
+                "name": "Salesforce",
+                "app_type": "saas",
+                "vendor": null,
+                "category": null,
+                "deployment": null,
+                "owner_team": null,
+                "reported_user_count": null,
+                "sso_enabled": null
+              },
+              "has_conflicts": false,
+              "observed_assignment_count": 1,
+              "owner_user_ids": [],
+              "identifiers": [
+                {
+                  "id": "2b510bde-ec54-4a98-9586-38902826b3dd",
+                  "namespace": "[\"example-corp\",\"application\",\"uploaded-data\",\"app_id\"]",
+                  "value": "TEST-SF"
+                }
+              ],
+              "field_state": {
+                "name": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "044e152f-eca5-4e5e-af35-575795910cf1"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "044e152f-eca5-4e5e-af35-575795910cf1",
+                      "source_id": "uploaded-data",
+                      "run_id": "92c971d3-ea71-4cfe-893c-ff8319e69f3a",
+                      "value": "Salesforce",
+                      "extraction_evidence": {
+                        "pointer": "/application/name",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "app_type": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "044e152f-eca5-4e5e-af35-575795910cf1"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "044e152f-eca5-4e5e-af35-575795910cf1",
+                      "source_id": "uploaded-data",
+                      "run_id": "92c971d3-ea71-4cfe-893c-ff8319e69f3a",
+                      "value": "saas",
+                      "extraction_evidence": {
+                        "pointer": "/application/type",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                }
+              },
+              "relationships": {
+                "data": [
+                  {
+                    "id": "574e6036-5a27-4267-84a4-71d015b86e50",
+                    "direction": "in",
+                    "relation_type": "uses",
+                    "other_ci_id": "2d4e4dff-3d6f-477f-8fa5-3bba987871c3"
+                  }
+                ],
+                "total": 1,
+                "limit": 50,
+                "offset": 0
+              },
+              "provenance": {
+                "total": 2,
+                "data": [
+                  {
+                    "observation_id": "044e152f-eca5-4e5e-af35-575795910cf1",
+                    "source_id": "uploaded-data",
+                    "run_id": "92c971d3-ea71-4cfe-893c-ff8319e69f3a",
+                    "record_key": "/ai/records/0",
+                    "observed_at": null,
+                    "resolution_status": "resolved",
+                    "origin": "ai",
+                    "attributes": {
+                      "name": "Salesforce",
+                      "app_type": "saas"
+                    },
+                    "relation_type": null,
+                    "target_ci_id": null
+                  },
+                  {
+                    "observation_id": "80aea8fd-5cbf-4acd-bc64-90323d1cddf4",
+                    "source_id": "uploaded-data",
+                    "run_id": "92c971d3-ea71-4cfe-893c-ff8319e69f3a",
+                    "record_key": "/ai/records/1/_cmdb/references/0",
+                    "observed_at": null,
+                    "resolution_status": "resolved",
+                    "origin": "ai",
+                    "attributes": {},
+                    "relation_type": null,
+                    "target_ci_id": null
+                  }
+                ]
+              },
+              "warnings": []
+            }
+          ],
+          "checks": {
+            "expected_entity": true,
+            "ai_provenance": true,
+            "replay": true,
+            "field_preservation": true,
+            "missing_mfa_unknown": true
+          },
+          "passed": true
+        },
+        {
+          "summary": true,
+          "passed": 1,
+          "total": 2
+        }
+      ]
+    },
+    {
+      "revision": "precise_scope_correction",
+      "results": [
+        {
+          "file": "github_style.json",
+          "extraction_version": "extraction-v7",
+          "model": "openai/gpt-4o-mini",
+          "http_status": 200,
+          "ingestion": {
+            "run_id": "b6911192-6aae-47a7-912f-c2c5f6ce1ccc",
+            "replayed": false,
+            "records": {
+              "received": 2,
+              "resolved": 2,
+              "quarantined": 0
+            },
+            "entities": {
+              "created": 2,
+              "updated": 0,
+              "unchanged": 0
+            },
+            "relationships": {
+              "created": 1,
+              "removed": 0,
+              "unchanged": 0
+            },
+            "warning_count": 0,
+            "warnings": [],
+            "unresolved_reference_count": 0
+          },
+          "inventory": {
+            "device": {
+              "data": [],
+              "total": 0,
+              "limit": 100,
+              "offset": 0
+            },
+            "user": {
+              "data": [
+                {
+                  "id": "fa607a22-bee4-461d-9dcf-a5fab3b5fc00",
+                  "kind": "user",
+                  "display_name": "Test Developer",
+                  "is_reference": false,
+                  "created_at": "2026-11-02T20:41:13.013471Z",
+                  "updated_at": "2026-11-02T20:41:13.023463Z",
+                  "attributes": {
+                    "name": "Test Developer",
+                    "email": "developer@example.test",
+                    "team": null,
+                    "department": null,
+                    "title": null,
+                    "status": "active",
+                    "mfa_enabled": false,
+                    "last_login": null,
+                    "groups": []
+                  },
+                  "has_conflicts": false
+                }
+              ],
+              "total": 1,
+              "limit": 100,
+              "offset": 0
+            },
+            "application": {
+              "data": [
+                {
+                  "id": "532d7220-a457-4d6b-9372-74a6a3218613",
+                  "kind": "application",
+                  "display_name": "GitHub",
+                  "is_reference": false,
+                  "created_at": "2026-11-02T20:41:13.013476Z",
+                  "updated_at": "2026-11-02T20:41:13.023443Z",
+                  "attributes": {
+                    "name": "GitHub",
+                    "app_type": null,
+                    "vendor": null,
+                    "category": null,
+                    "deployment": null,
+                    "owner_team": null,
+                    "reported_user_count": null,
+                    "sso_enabled": null
+                  },
+                  "has_conflicts": false,
+                  "observed_assignment_count": 1,
+                  "owner_user_ids": []
+                }
+              ],
+              "total": 1,
+              "limit": 100,
+              "offset": 0
+            }
+          },
+          "details": [
+            {
+              "id": "fa607a22-bee4-461d-9dcf-a5fab3b5fc00",
+              "kind": "user",
+              "display_name": "Test Developer",
+              "is_reference": false,
+              "created_at": "2026-11-02T20:41:13.013471Z",
+              "updated_at": "2026-11-02T20:41:13.023463Z",
+              "attributes": {
+                "name": "Test Developer",
+                "email": "developer@example.test",
+                "team": null,
+                "department": null,
+                "title": null,
+                "status": "active",
+                "mfa_enabled": false,
+                "last_login": null,
+                "groups": []
+              },
+              "has_conflicts": false,
+              "identifiers": [
+                {
+                  "id": "a59bbcf0-9208-41a8-8b8f-9ca1e36738a0",
+                  "namespace": "[\"example-corp\",\"user\",\"uploaded-data\",\"user_id\"]",
+                  "value": "506"
+                }
+              ],
+              "field_state": {
+                "name": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "697751aa-827a-4a8b-a08e-93b3f4de21ee"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "697751aa-827a-4a8b-a08e-93b3f4de21ee",
+                      "source_id": "uploaded-data",
+                      "run_id": "b6911192-6aae-47a7-912f-c2c5f6ce1ccc",
+                      "value": "Test Developer",
+                      "extraction_evidence": {
+                        "pointer": "/members/0/name",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "email": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "697751aa-827a-4a8b-a08e-93b3f4de21ee"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "697751aa-827a-4a8b-a08e-93b3f4de21ee",
+                      "source_id": "uploaded-data",
+                      "run_id": "b6911192-6aae-47a7-912f-c2c5f6ce1ccc",
+                      "value": "developer@example.test",
+                      "extraction_evidence": {
+                        "pointer": "/members/0/email",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "status": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "697751aa-827a-4a8b-a08e-93b3f4de21ee"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "697751aa-827a-4a8b-a08e-93b3f4de21ee",
+                      "source_id": "uploaded-data",
+                      "run_id": "b6911192-6aae-47a7-912f-c2c5f6ce1ccc",
+                      "value": "active",
+                      "extraction_evidence": {
+                        "pointer": "/members/0/login",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                },
+                "mfa_enabled": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "697751aa-827a-4a8b-a08e-93b3f4de21ee"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "697751aa-827a-4a8b-a08e-93b3f4de21ee",
+                      "source_id": "uploaded-data",
+                      "run_id": "b6911192-6aae-47a7-912f-c2c5f6ce1ccc",
+                      "value": false,
+                      "extraction_evidence": {
+                        "pointer": "/members/0/two_factor_authentication",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                }
+              },
+              "relationships": {
+                "data": [
+                  {
+                    "id": "8f724e99-19ca-4ee5-81a0-a7bf813d509d",
+                    "direction": "out",
+                    "relation_type": "uses",
+                    "other_ci_id": "532d7220-a457-4d6b-9372-74a6a3218613"
+                  }
+                ],
+                "total": 1,
+                "limit": 50,
+                "offset": 0
+              },
+              "provenance": {
+                "total": 2,
+                "data": [
+                  {
+                    "observation_id": "697751aa-827a-4a8b-a08e-93b3f4de21ee",
+                    "source_id": "uploaded-data",
+                    "run_id": "b6911192-6aae-47a7-912f-c2c5f6ce1ccc",
+                    "record_key": "/ai/records/0",
+                    "observed_at": null,
+                    "resolution_status": "resolved",
+                    "origin": "ai",
+                    "attributes": {
+                      "name": "Test Developer",
+                      "email": "developer@example.test",
+                      "status": "active",
+                      "mfa_enabled": false
+                    },
+                    "relation_type": null,
+                    "target_ci_id": null
+                  },
+                  {
+                    "observation_id": "ff01497a-bc28-4974-953c-dc49f603963b",
+                    "source_id": "uploaded-data",
+                    "run_id": "b6911192-6aae-47a7-912f-c2c5f6ce1ccc",
+                    "record_key": "/ai/records/0/_cmdb/relationships/0",
+                    "observed_at": null,
+                    "resolution_status": "resolved",
+                    "origin": "ai",
+                    "attributes": {},
+                    "relation_type": "uses",
+                    "target_ci_id": "532d7220-a457-4d6b-9372-74a6a3218613"
+                  }
+                ]
+              },
+              "warnings": []
+            },
+            {
+              "id": "532d7220-a457-4d6b-9372-74a6a3218613",
+              "kind": "application",
+              "display_name": "GitHub",
+              "is_reference": false,
+              "created_at": "2026-11-02T20:41:13.013476Z",
+              "updated_at": "2026-11-02T20:41:13.023443Z",
+              "attributes": {
+                "name": "GitHub",
+                "app_type": null,
+                "vendor": null,
+                "category": null,
+                "deployment": null,
+                "owner_team": null,
+                "reported_user_count": null,
+                "sso_enabled": null
+              },
+              "has_conflicts": false,
+              "observed_assignment_count": 1,
+              "owner_user_ids": [],
+              "identifiers": [
+                {
+                  "id": "16c6137c-3477-40dd-92b9-0a30e30b29b2",
+                  "namespace": "[\"example-corp\",\"application\",\"uploaded-data\",\"app_id\"]",
+                  "value": "TEST-GITHUB"
+                }
+              ],
+              "field_state": {
+                "name": {
+                  "status": "selected",
+                  "observation_ids": [
+                    "471ae1e8-abb7-4eaf-a28e-91367ef009e8"
+                  ],
+                  "observation_count": 1,
+                  "evidence": [
+                    {
+                      "observation_id": "471ae1e8-abb7-4eaf-a28e-91367ef009e8",
+                      "source_id": "uploaded-data",
+                      "run_id": "b6911192-6aae-47a7-912f-c2c5f6ce1ccc",
+                      "value": "GitHub",
+                      "extraction_evidence": {
+                        "pointer": "/application/name",
+                        "quote": null
+                      },
+                      "observed_at": null
+                    }
+                  ]
+                }
+              },
+              "relationships": {
+                "data": [
+                  {
+                    "id": "8f724e99-19ca-4ee5-81a0-a7bf813d509d",
+                    "direction": "in",
+                    "relation_type": "uses",
+                    "other_ci_id": "fa607a22-bee4-461d-9dcf-a5fab3b5fc00"
+                  }
+                ],
+                "total": 1,
+                "limit": 50,
+                "offset": 0
+              },
+              "provenance": {
+                "total": 2,
+                "data": [
+                  {
+                    "observation_id": "69bf4b07-5f7d-4f10-9a60-451ceb9d276c",
+                    "source_id": "uploaded-data",
+                    "run_id": "b6911192-6aae-47a7-912f-c2c5f6ce1ccc",
+                    "record_key": "/ai/records/0/_cmdb/references/0",
+                    "observed_at": null,
+                    "resolution_status": "resolved",
+                    "origin": "ai",
+                    "attributes": {},
+                    "relation_type": null,
+                    "target_ci_id": null
+                  },
+                  {
+                    "observation_id": "471ae1e8-abb7-4eaf-a28e-91367ef009e8",
+                    "source_id": "uploaded-data",
+                    "run_id": "b6911192-6aae-47a7-912f-c2c5f6ce1ccc",
+                    "record_key": "/ai/records/1",
+                    "observed_at": null,
+                    "resolution_status": "resolved",
+                    "origin": "ai",
+                    "attributes": {
+                      "name": "GitHub"
+                    },
+                    "relation_type": null,
+                    "target_ci_id": null
+                  }
+                ]
+              },
+              "warnings": []
+            }
+          ],
+          "checks": {
+            "expected_entity": true,
+            "ai_provenance": true,
+            "replay": true,
+            "field_preservation": true
+          },
+          "passed": true
+        },
+        {
+          "summary": true,
+          "passed": 1,
+          "total": 1
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 10,
+    "total": 10,
+    "latest_by_fixture": [
+      {
+        "file": "jamf_style.json",
+        "http_status": 200,
+        "passed": true,
+        "checks": {
+          "expected_entity": true,
+          "ai_provenance": true,
+          "replay": true,
+          "field_preservation": true
+        }
+      },
+      {
+        "file": "sccm_style.json",
+        "http_status": 200,
+        "passed": true,
+        "checks": {
+          "expected_entity": true,
+          "ai_provenance": true,
+          "replay": true,
+          "field_preservation": true
+        }
+      },
+      {
+        "file": "glpi_style.json",
+        "http_status": 200,
+        "passed": true,
+        "checks": {
+          "expected_entity": true,
+          "ai_provenance": true,
+          "replay": true,
+          "field_preservation": true
+        }
+      },
+      {
+        "file": "netbox_style.json",
+        "http_status": 200,
+        "passed": true,
+        "checks": {
+          "expected_entity": true,
+          "ai_provenance": true,
+          "replay": true,
+          "field_preservation": true
+        }
+      },
+      {
+        "file": "github_style.json",
+        "http_status": 200,
+        "passed": true,
+        "checks": {
+          "expected_entity": true,
+          "ai_provenance": true,
+          "replay": true,
+          "field_preservation": true
+        }
+      },
+      {
+        "file": "jira_style.json",
+        "http_status": 200,
+        "passed": true,
+        "checks": {
+          "expected_entity": true,
+          "ai_provenance": true,
+          "replay": true,
+          "field_preservation": true
+        }
+      },
+      {
+        "file": "salesforce_style.json",
+        "http_status": 200,
+        "passed": true,
+        "checks": {
+          "expected_entity": true,
+          "ai_provenance": true,
+          "replay": true,
+          "field_preservation": true,
+          "missing_mfa_unknown": true
+        }
+      },
+      {
+        "file": "workday_style.json",
+        "http_status": 200,
+        "passed": true,
+        "checks": {
+          "expected_entity": true,
+          "ai_provenance": true,
+          "replay": true,
+          "field_preservation": true,
+          "missing_mfa_unknown": true
+        }
+      },
+      {
+        "file": "slack_style.json",
+        "http_status": 200,
+        "passed": true,
+        "checks": {
+          "expected_entity": true,
+          "ai_provenance": true,
+          "replay": true,
+          "field_preservation": true,
+          "missing_mfa_unknown": true
+        }
+      },
+      {
+        "file": "snmp_style.csv",
+        "http_status": 200,
+        "passed": true,
+        "checks": {
+          "expected_entity": true,
+          "ai_provenance": true,
+          "replay": true,
+          "field_preservation": true
+        }
+      }
+    ]
+  }
+}

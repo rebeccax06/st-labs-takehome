@@ -1,0 +1,228 @@
+{
+  "source_command": "python -m app.demo",
+  "mode": "mocked_query_plans",
+  "note": "Selected actual responses from one offline run. Generated UUIDs/timestamps vary; plans are explicitly mocked.",
+  "inventory_totals": {
+    "devices": 3,
+    "users": 12,
+    "applications": 28
+  },
+  "ingest_response": {
+    "run_id": "e76993c0-8def-4e7e-879a-fef1cb00103c",
+    "replayed": false,
+    "records": {
+      "received": 3,
+      "resolved": 3,
+      "quarantined": 0
+    },
+    "entities": {
+      "created": 3,
+      "updated": 0,
+      "unchanged": 0
+    },
+    "relationships": {
+      "created": 0,
+      "removed": 0,
+      "unchanged": 0
+    },
+    "warning_count": 3,
+    "warnings": [
+      {
+        "code": "unresolved_reference",
+        "path": "/0",
+        "message": "Relationship target has no unambiguous stable identity",
+        "candidate_ids": [],
+        "relation_type": "assigned_to"
+      },
+      {
+        "code": "unresolved_reference",
+        "path": "/1",
+        "message": "Relationship target has no unambiguous stable identity",
+        "candidate_ids": [],
+        "relation_type": "assigned_to"
+      },
+      {
+        "code": "unresolved_reference",
+        "path": "/2",
+        "message": "Relationship target has no unambiguous stable identity",
+        "candidate_ids": [],
+        "relation_type": "assigned_to"
+      }
+    ],
+    "unresolved_reference_count": 3
+  },
+  "replay_response": {
+    "run_id": "e76993c0-8def-4e7e-879a-fef1cb00103c",
+    "replayed": true,
+    "records": {
+      "received": 3,
+      "resolved": 3,
+      "quarantined": 0
+    },
+    "entities": {
+      "created": 3,
+      "updated": 0,
+      "unchanged": 0
+    },
+    "relationships": {
+      "created": 0,
+      "removed": 0,
+      "unchanged": 0
+    },
+    "warning_count": 3,
+    "warnings": [
+      {
+        "code": "unresolved_reference",
+        "path": "/0",
+        "message": "Relationship target has no unambiguous stable identity",
+        "candidate_ids": [],
+        "relation_type": "assigned_to"
+      },
+      {
+        "code": "unresolved_reference",
+        "path": "/1",
+        "message": "Relationship target has no unambiguous stable identity",
+        "candidate_ids": [],
+        "relation_type": "assigned_to"
+      },
+      {
+        "code": "unresolved_reference",
+        "path": "/2",
+        "message": "Relationship target has no unambiguous stable identity",
+        "candidate_ids": [],
+        "relation_type": "assigned_to"
+      }
+    ],
+    "unresolved_reference_count": 3
+  },
+  "count_response": {
+    "status": "answered",
+    "answer": "1 recorded device matches the validated filters.",
+    "plan": {
+      "version": 1,
+      "operation": "count",
+      "root": "device",
+      "where": [
+        {
+          "field": "status",
+          "operator": "eq",
+          "value": "active"
+        }
+      ],
+      "exists": [],
+      "limit": 3,
+      "offset": 0
+    },
+    "resolved_references": [],
+    "data": null,
+    "total": 1,
+    "limit": 3,
+    "offset": 0,
+    "warnings": [
+      {
+        "code": "recorded_evidence_only",
+        "message": "Results describe recorded inventory, not a complete live directory. Unknown or conflicted values do not satisfy equality filters; separate identities are never joined by similar names.",
+        "path": null,
+        "field": null,
+        "count": null
+      },
+      {
+        "code": "unknown_field",
+        "message": "2 reachable device CIs have no usable status value before this node's filters. They cannot satisfy equality/membership on that field; values may be missing or conflicted.",
+        "path": "root",
+        "field": "status",
+        "count": 2
+      },
+      {
+        "code": "conflicting_field",
+        "message": "2 reachable device CIs have conflicting status evidence; their projected value is unknown. Inspect CI details for source attribution.",
+        "path": "root",
+        "field": "status",
+        "count": 2
+      }
+    ]
+  },
+  "two_hop_response": {
+    "status": "answered",
+    "answer": "0 recorded devices match the validated filters. Showing 0 at offset 0.",
+    "plan": {
+      "version": 1,
+      "operation": "list",
+      "root": "device",
+      "where": [],
+      "exists": [
+        {
+          "relation": "assigned_to",
+          "direction": "out",
+          "target_kind": "user",
+          "where": [
+            {
+              "field": "mfa_enabled",
+              "operator": "eq",
+              "value": false
+            }
+          ],
+          "exists": [
+            {
+              "relation": "uses",
+              "direction": "out",
+              "target_kind": "application",
+              "where": [
+                {
+                  "field": "name",
+                  "operator": "eq",
+                  "value": "GitHub"
+                }
+              ],
+              "exists": []
+            }
+          ]
+        }
+      ],
+      "limit": 3,
+      "offset": 0
+    },
+    "resolved_references": [
+      {
+        "kind": "application",
+        "field": "name",
+        "value": "GitHub",
+        "ci_id": "1f5a246a-05cb-41dd-9afa-c77522b647ad"
+      }
+    ],
+    "data": [],
+    "total": 0,
+    "limit": 3,
+    "offset": 0,
+    "warnings": [
+      {
+        "code": "recorded_evidence_only",
+        "message": "Results describe recorded inventory, not a complete live directory. Unknown or conflicted values do not satisfy equality filters; separate identities are never joined by similar names.",
+        "path": null,
+        "field": null,
+        "count": null
+      },
+      {
+        "code": "unresolved_relationships",
+        "message": "6 retained assigned_to observations have unresolved identity in reachable sources or unlinked records. Counts refer to observations, not distinct real-world edges.",
+        "path": "root",
+        "field": null,
+        "count": 6
+      },
+      {
+        "code": "unknown_field",
+        "message": "3 reachable user CIs have no usable mfa_enabled value before this node's filters. They cannot satisfy equality/membership on that field; values may be missing or conflicted.",
+        "path": "root.exists[0]",
+        "field": "mfa_enabled",
+        "count": 3
+      },
+      {
+        "code": "no_recorded_matches",
+        "message": "No matching recorded evidence. This does not prove real-world absence.",
+        "path": null,
+        "field": null,
+        "count": 0
+      }
+    ]
+  }
+}
