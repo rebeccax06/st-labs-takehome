@@ -20,7 +20,7 @@ from app.schemas.normalized import (
 )
 
 MAX_AI_BYTES = 64 * 1024
-PROMPT_VERSION = "extraction-v8"
+PROMPT_VERSION = "extraction-v9"
 MODELS = {"device": DeviceRecord, "user": UserRecord, "application": ApplicationRecord}
 IDENTIFIER_TYPES = {
     "device": {"device_id", "external_id", "serial"},

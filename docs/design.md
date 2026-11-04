@@ -1,34 +1,8 @@
 # AI-first CMDB: technical design
 
-**Status: Phases 1–8 implemented; limited live extraction smoke checks verified.** The database foundation, deterministic preparation, identity/evidence/relationship services, transactional replay, and inventory REST API are implemented and tested. OpenRouter extraction is tested with mocked responses and incremental live checks of ten synthetic unfamiliar-source fixtures. Selected fields, provenance, and replay passed; complete extraction and broad vendor compatibility are not established. See [recorded live results](unfamiliar-live-results.json). Natural-language planning has a preview API/CLI; POST /ask now resolves references and executes validated plans for grounded answers. The implementation target is the 6–8-hour assignment in [the specification](../STLabs_Backend_TakeHome_CMDB_Junior.md). See [setup and verification](../README.md#setup-and-running).
+This document explains how the CMDB combines inventory records, handles conflicting evidence, and answers questions about devices, users, and applications. It covers the implementation and the tradeoffs made for the [assignment](../STLabs_Backend_TakeHome_CMDB_Junior.md). For setup and commands, see the [README](../README.md#quick-start).
 
-Phase 1 uses SQLAlchemy joined-table inheritance and a validated ORM session for cross-table invariants. UTC-aware timestamps are restored explicitly on SQLite reads. Initialization uses create_all, not migrations. The full database suite now runs; its earlier missing-dependency blocker is resolved. Email validation is a modest inventory-address syntax check rather than complete RFC or delivery validation.
-
-Phase 2 prepares all five supplied layouts, with explicit source configuration, raw-record evidence, normalization, bounded warnings, and safe parsing. YAML aliases are rejected entirely, and only configured snapshot paths supply observation time. The command-line preview remains preparation-only.
-
-Phase 3 follows identity resolution → evidence selection → relationship target resolution → transactional persistence/replay → API integration. New and duplicate records are grouped by exact scoped keys before creating CIs. Attribute and assignment projections use retained evidence for affected CIs. Root records are materialized before reference targets; both use the same resolver. Application label aliases are configuration within an application-name authority. SQLite writers acquire a short BEGIN IMMEDIATE transaction before identity reads. POST /ingest and the four inventory GET endpoints were delivered in Phase 3; POST /ask was added in Phase 6.
-
-Upload/extraction implementation: POST /ingest accepts multipart files and the legacy JSON envelope, plus direct raw bodies. POST /ingest/raw provides a text/plain editor; GET /ingest/sources supplies source/format choices. Organization and known formats come from configuration. The default uploaded-data source uses auto detection, deterministically mapping recognized layouts and asking OpenRouter only for unfamiliar content. Model credentials are loaded lazily from token.txt or environment variables, never included in prompts or responses. AI DTOs cannot choose namespaces or organization. Pydantic, literal-identifier evidence, and attribute-evidence checks precede the existing persistence boundary. AI origins and evidence are retained.
-
-All transports share content limits, consistent errors, and replay. Replay is checked before model invocation and rechecked in the write transaction; its version covers source policy, model/prompt version, and parser format. Concurrent first-time requests may both call the provider, but only one run commits. A bounded body middleware checks actual incoming bytes before multipart parsing, including chunked bodies. No credentials or HTTP transport metadata alter entity identity.
-
-New practical limits: uploads are UTF-8 text, not PDF/Excel/image processing. AI input is limited to 64 KiB within the overall 1 MiB upload limit, with bounded output and one validation repair attempt. Literal evidence and schemas do not prove all semantic claims. The live smoke check could not reach OpenRouter; mocked integration, credential handling, and error paths are verified.
-
-
-Phase 4 completion review retains the existing extraction workflow and closes validation gaps: provider envelopes are shape-checked; duplicate JSON keys and non-finite numbers are rejected; correction gets bounded prior output and an actionable validation hint; attributes/identifiers must cite record-local evidence; targets can cite their own records; obvious display labels cannot masquerade as external IDs; explicit string/native boolean contradictions are rejected. The validation/prompt version is extraction-v2, so previous cached extractions are not reused under the revised rules. No HTTP contract, table, or migration changes were required.
-
-`python -m app.ai --live-check` is an explicit optional provider smoke test on synthetic data, without database writes or credential output. It returns a nonzero exit and sanitized JSON on failure. Phase 4 added 34 completion checks after the upload feature; Phase 5 added 86 planning checks; Phase 6 adds 38 execution/API checks, bringing the full suite to 404 tests. The live check still cannot connect from this sandbox; mocked-provider verification is complete.
-
-Implementation adjustments and deliberate limits:
-
-- An inconsistent connected identity group is quarantined together, rather than accepting some records according to their order. Existing CIs are never merged or changed by that group.
-- Reference CIs support stable identifiers for devices and users as well as applications. Name-only people remain unresolved.
-- Configured aliases currently map application names to canonical names within their declared authority. Direct label-to-external-ID alias configuration is deferred; catalog IDs attach through the shared canonical name. Both old-label and canonical keys are checked so new aliases cannot hide pre-existing identity conflicts.
-- BEGIN IMMEDIATE serializes SQLite writes before lookup; lock contention returns 503. A committed racing replay returns the original summary. General-purpose transaction retries remain deferred.
-- CI details bound supporting evidence to 20 observations per field, with full counts, in addition to the 20 recent-observation summaries and paginated edges. Internal evidence is retained in full.
-- Policy changes require deliberate reingestion of affected data; there is no background reconciliation or automatic merge. Dependency ranges remain in requirements.txt; a complete exact-version lock is deferred.
-
-All **437 tests pass** (including 86 Phase 5, 38 Phase 6, 31 Phase 7, and 2 demo checks). The complete suite covers model constraints, all fixtures, alias safety, conservative identity matching, conflicts, missing values, assignments, all relationship types, replay, atomic rollback, concurrent replay/locking, pagination, attribution, HTTP errors, and end-to-end ingestion/read flows. OpenRouter extraction is now integrated; natural-language execution and grounded answers are integrated.
+The ingestion pipeline, database, inventory API, and natural-language queries are implemented. Most tests use mocked model responses. Separate live checks use synthetic fixtures to check selected fields, provenance, and replay; they do not establish complete extraction or general vendor compatibility.
 
 ## 1. Overview and goals
 
@@ -36,9 +10,9 @@ A configuration item (CI) is something an organization needs to track to underst
 
 The difficult part is combining evidence from different systems. Two exports may describe the same device using different identifiers, disagree about its status, or reference a person only by name. The CMDB must distinguish what it knows from what it cannot safely infer.
 
-The proposed service accepts structured inventories and unfamiliar text, normalizes them into a common model, resolves identities using explicit rules, and stores queryable relationships. AI helps interpret unfamiliar inputs and translate natural-language questions. Validated application logic remains responsible for identity, persistence, and database queries.
+The service accepts structured inventories and unfamiliar text, converts them into a common model, and uses explicit rules to identify entities and store their relationships. AI interprets unfamiliar inputs and natural-language questions. Application code validates those interpretations and handles identity, persistence, and database queries.
 
-The prototype prioritizes reliable ingestion, explainable decisions, and a small useful query language. New infrastructure or SaaS sources should fit through adapters or AI-assisted extraction without changes to the core workflow or database schema, provided their data maps to the three supported CI types and relationship vocabulary. New CI types or new first-class queryable attributes would require deliberate model changes. Dataset size is not fixed by the examples; request and query limits bound work per operation.
+The main priorities are reliable ingestion and decisions that can be explained from the evidence. New sources can use an adapter or AI extraction as long as they map to the three supported CI types and relationships. Adding a CI type or a queryable attribute requires a model change. The sample files do not set the database size; limits apply to individual uploads and queries.
 
 ## 2. Architecture at a glance
 
@@ -58,18 +32,15 @@ flowchart LR
   DB --> Answer[Rows, counts, and grounded answer]
 ```
 
+Two workflows share the data model. Ingestion turns source records into normalized entities and relationship assertions. Querying turns a question into a limited read plan. Both validate model output with strict Pydantic schemas.
 
-
-There are two workflows sharing one data model. Ingestion translates source records into normalized entities and relationship assertions. Querying translates a question into a limited read plan. Both workflows use strict Pydantic schemas at the AI boundary.
-
-Routes handle HTTP contracts. Adapters understand source layouts. Ingestion services coordinate normalization, identity resolution, and persistence. The AI client handles provider calls; the query compiler translates validated plans into SQLAlchemy expressions. Keeping these responsibilities separate allows most tests to run without a network or a real LLM.
+Each part has a specific job: routes handle requests and responses, adapters understand source layouts, and ingestion services coordinate normalization, identity resolution, and persistence. The AI client calls the provider. The query compiler builds SQLAlchemy expressions from validated plans. This separation also lets most tests run without a network connection.
 
 Organization and source definitions live in a small versioned configuration file. Each source definition names its organization, source instance, adapter, identifier authorities, optional attribute authority, and timestamp semantics. Alias mappings are configuration too. Source names and mappings are not hardcoded into the resolver. Configuration is trusted operator input; uploaded documents cannot declare themselves authoritative or choose a different organization's identity scope.
 
-The prototype serves one configured organization per deployment. Organization IDs are still explicit in stored identities and ingestion runs so scope is never implicit. This is not a claim of tenant isolation or production authorization.
+Each deployment serves one configured organization. Stored identities and ingestion runs still carry organization IDs to keep their scope explicit. Tenant isolation and authorization would need additional work.
 
 ## 3. Technology choices and tradeoffs
-
 
 | Choice                                    | Reason and tradeoff                                                                                                                                               |
 | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -81,10 +52,9 @@ The prototype serves one configured organization per deployment. Organization ID
 | pytest                                    | Unit tests for policy and integration tests for complete workflows. AI responses are mocked by default.                                                           |
 | Standard JSON/CSV readers and safe PyYAML | Deterministic parsing of recognized structures. A parser understands syntax; adapters still need to understand each source's meaning.                             |
 
-
 A relational database is a good fit because identity keys, typed attributes, and directed relationships need constraints and joins. A graph database would be useful for unrestricted deep traversals, but this design needs only bounded paths. A vector database would not solve entity identity or precise security filtering. Neither is needed for this timebox.
 
-Dependencies use compatible ranges in requirements.txt; an exact lock remains deferred. Secrets and the selected OpenRouter model will come from environment configuration; credentials must never appear in fixtures, source control, or saved development transcripts.
+Dependencies use compatible ranges in `requirements.txt`; there is no exact version lock yet. Environment settings select the OpenRouter model and credentials, with a local token-file option. Credentials should stay out of fixtures, source control, and development transcripts.
 
 ## 4. Data model and entity relationships
 
@@ -92,10 +62,9 @@ The model separates **internal identity**, **attributes**, and **evidence**. A C
 
 **Provenance** means recording where a fact came from. If a device's status looks wrong, an engineer should be able to find the source, record, and observation that supplied it. The prototype keeps normalized observations and the original parsed record. It does not attempt a complete historical CMDB or an audit event platform.
 
-### Proposed tables
+### Tables
 
-UUIDs use `VARCHAR(36)` in SQLite. Times are UTC datetimes, JSON columns use SQLAlchemy JSON, and enum-like values use CHECK constraints. Below, `!` means required and `?` means nullable. All `id` columns are primary keys; all listed references are foreign keys. Deletion is outside the public API.
-
+SQLAlchemy uses joined-table inheritance to connect each CI to its subtype. UUIDs use `VARCHAR(36)` in SQLite. A custom datetime type restores UTC timezone information when SQLite returns a timestamp. JSON columns use SQLAlchemy JSON, and enum-like values use CHECK constraints. Initialization creates missing tables with `create_all`; it does not migrate an existing schema. Below, `!` means required and `?` means nullable. All `id` columns are primary keys; all listed references are foreign keys. Deletion is outside the public API.
 
 | Table                 | Columns                                                                                                                                                                                                                                                                                     | Constraints and initial indexes                                                                                                                                                                                    |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -109,8 +78,7 @@ UUIDs use `VARCHAR(36)` in SQLite. Times are UTC datetimes, JSON columns use SQL
 | `ingestion_runs`      | `id UUID!`, `organization_id TEXT!`, `source_id TEXT!`, `format TEXT!`, `payload_sha256 TEXT!`, `policy_version TEXT!`, `received_at DATETIME!`, `completed_at DATETIME!`, `result JSON!`                                                                                                   | UNIQUE `(organization_id,source_id,payload_sha256,policy_version)`. Stores committed processing outcomes, including warnings and quarantined records.                                                              |
 | `observations`        | `id UUID!`, `run_id UUID! FK ingestion_runs`, `record_key TEXT!`, `ci_id UUID? FK configuration_items`, `observed_at DATETIME?`, `raw_record JSON!`, `normalized_record JSON!`, `origin TEXT!`, `resolution_status TEXT!`                                                                   | UNIQUE `(run_id,record_key)`; index `(ci_id,observed_at)`. Origin adapter/ai; status resolved/unresolved/identity_conflict. A null ci_id is allowed for quarantined evidence.                                      |
 
-
-`field_state` is lightweight bookkeeping for the current projection: each observed attribute records `selected` or `conflict` and supporting observation IDs. A conflicted scalar projects to NULL; a missing attribute is also NULL but has no observed state. This makes queries simple while details can distinguish conflict from missing data. The display name is only a convenience label, falling back to kind plus internal ID if necessary; it is never evidence of identity.
+`field_state` explains how the current field values were chosen. Each observed attribute records either `selected` or `conflict`, along with the supporting observation IDs. A conflicted scalar is stored as NULL. A missing attribute is also NULL, but has no observed state. Queries can use ordinary columns, while detail responses explain why a value is unavailable. The display name is a convenience label, with kind plus internal ID as a fallback; it does not establish identity.
 
 Observations store relationship assertions alongside normalized attributes, using a record path and resolved target IDs where available. They are attached to the originating CI, rather than having foreign keys to mutable relationship rows. This preserves evidence when a current assignment changes without introducing relationship history tables. Root and nested entity records get distinct stable paths within a run. Secondary source fields remain in the original record and are not automatically queryable attributes.
 
@@ -129,13 +97,11 @@ erDiagram
   configuration_items ||--o{ relationships : to
 ```
 
-
-
-The three optional subtype links collectively require exactly one subtype. The service also checks identifier organization/type and relationship endpoint compatibility. SQL constraints handle key uniqueness and references; a small number of cross-table semantic invariants remain application checks.
+Each CI must have exactly one matching subtype. The ORM session checks this, along with identifier scope and valid relationship endpoints, before flushing changes. Database constraints enforce unique keys and foreign-key references.
 
 ### Ingestion and provenance
 
-Ingestion runs group the evidence received in one upload. Observations link that evidence to the core model; configuration_items below is the same table shown above. An observation can remain unlinked when its identity is unresolved or conflicting.
+An ingestion run groups the records received in one upload. Observations preserve those records and link them to CIs when identity can be resolved. If an identity is missing or conflicting, the observation stays unlinked. The `configuration_items` table below is the same one shown above.
 
 ```mermaid
 erDiagram
@@ -143,12 +109,7 @@ erDiagram
   configuration_items o|--o{ observations : supported_by
 ```
 
-
-
-
-
 ### Relationships
-
 
 | Type              | Direction                               | Meaning                                                                                      |
 | ----------------- | --------------------------------------- | -------------------------------------------------------------------------------------------- |
@@ -158,14 +119,13 @@ erDiagram
 | `integrates_with` | application → application               | A source's directed integration assertion. It does not imply a dependency or a reverse edge. |
 | `owned_by`        | application → user                      | Explicitly identified human owner. Team owners instead populate owner_team.                  |
 
-
 Edges connect CI IDs within the same organization. A device query follows outgoing assigned_to edges; finding dependents of an application follows incoming depends_on edges from that application. These are normal indexed joins, not string comparisons between names.
 
 NULL means the value is unavailable or unresolved. In particular, **unknown MFA is not false MFA**. API detail responses explain the reason for NULL through field_state and evidence. Boolean false always means an explicit, selected negative observation.
 
 ## 5. Identity resolution
 
-Entity resolution answers: “Does this new record describe a CI we already know?” It is separate from deciding which of two status values to display. A wrong merge can attach one person's access or security posture to another person, so the prototype favors stable identifiers and explicit configuration over fuzzy matching.
+Entity resolution asks whether a new record describes an item already in the database. Choosing which status value to display happens later. Getting identity wrong could attach one person's access or MFA status to someone else, so matching uses stable identifiers and explicit configuration.
 
 ### Identifier namespaces
 
@@ -175,15 +135,13 @@ An identifier is only meaningful within its issuing scope. A device ID from one 
 
 Store it as a canonical JSON-array string, with no optional components or alternate spellings. Each component is a validated configuration ID; identifier-specific normalization applies to the separate value. For example:
 
-
 | Namespace tuple                                        | Value    | Interpretation                                                          |
 | ------------------------------------------------------ | -------- | ----------------------------------------------------------------------- |
 | `["org-a","device","jamf-prod","device_id"]`           | `42`     | Jamf's local device 42.                                                 |
 | `["org-a","device","inventory-east","device_id"]`      | `42`     | Another system's device 42; not the same key.                           |
 | `["org-a","device","approved-serial-domain","serial"]` | `SN-804` | Serial identity shared only by sources configured to trust this domain. |
 
-
-**UNIQUE(namespace,value) is sufficient** if construction is canonical and the resolver verifies that namespace organization/type agrees with the CI. The tuple includes identifier type, so an additional independently mutable identifier_kind column would be redundant. The tradeoff is that namespace construction becomes a critical shared contract; tests must forbid ad hoc string construction. Explicit columns could replace the encoded tuple later if SQL reporting on namespace components becomes important.
+The unique constraint on `(namespace, value)` works because the helper always constructs the same string for the same scope, and the resolver checks that its organization and type match the CI. Identifier type is already part of that scope, so a separate column would duplicate it. This makes the namespace helper important: callers must use it consistently. Separate columns would be worth considering if reporting needed to query individual scope components.
 
 External IDs retain their authority's case rules. Email can be a shared key only when configuration declares an appropriate authority and normalization rule. Generic lowercasing, shared mailboxes, recycled accounts, and unverified addresses are not universal identity guarantees. Serial numbers likewise require a trusted scope. The prototype drops blank identifiers and quarantines contradictory stable keys; broader placeholder-value screening remains the source adapter/configuration owner's responsibility. IPs, MACs, and hostnames remain descriptive evidence by default.
 
@@ -202,13 +160,13 @@ Duplicates with agreeing keys resolve to one CI, and unique edge constraints pre
 
 ### Configured aliases and reference CIs
 
-Sources often reference applications using labels rather than IDs. Current configuration maps a source-scoped label to a canonical application name within its application-name authority. A catalog record can then attach its external ID. Direct alias-to-external-ID mapping is a possible extension. It may also declare an organization-specific application-name authority where labels are known to be unique. Normalization and aliases apply within that declared scope; they are not global product-name rules.
+Sources often reference applications using labels rather than IDs. Configuration maps a source-scoped label to a canonical application name within its declared name authority. A catalog record can then attach its external ID. Configuration can also declare an organization-specific name authority when those labels are known to be unique. Mapping an alias directly to an external ID would be a future extension. Normalization and aliases apply within that declared scope; they are not global product-name rules.
 
 A known key without detailed inventory can create a **reference CI**, with is_reference=true. Later inventory enriches that same CI. Without a shared-name guarantee or mapping, a label creates only a source-scoped reference, so two similarly named deployments do not collapse. Ambiguous mappings are configuration errors; ambiguous query names require clarification. If later data exposes two already-created CIs for one purported identity, use the same conflict path rather than adding an implicit merge feature.
 
 ## 6. Ingestion pipeline
 
-The ingestion problem is translation plus reconciliation: different source layouts need to become the same internal record shape, while preserving enough evidence to explain the result. Adding an adapter changes how a source is read, not how identities or database writes work.
+Ingestion has two jobs: translate different layouts into the same record shape, then reconcile what those records say. It preserves the original evidence so the result can be explained. An adapter only changes how a source is read; identity rules and database writes stay in the shared services.
 
 ### Request and workflow
 
@@ -221,7 +179,7 @@ The ingestion problem is translation plus reconciliation: different source layou
 }
 ```
 
-For file and paste inputs, the selected source supplies organization and identity policy; named adapters also supply format. The legacy JSON envelope remains valid. The configured source selects an adapter and identity policy. Formats are json/csv/yaml/text. The envelope carries textual content, not server file paths or remote URLs. Reliable observation times come from configured source fields; the client does not get an unrestricted timestamp override.
+The selected source supplies the organization, adapter, and identity policy. Named adapters also specify the expected format: JSON, CSV, or YAML. Text and unfamiliar layouts can use AI extraction. The JSON envelope shown above carries the content itself; it does not ask the server to open a path or fetch a URL. Observation times come only from configured source fields.
 
 1. **Validate and parse.** Enforce source/organization configuration and bounded input. Use deterministic parsers for known structures; malformed known input returns an error rather than silently invoking AI. Safe YAML excludes object construction; reject duplicate mapping/header keys and malformed CSV rows.
 2. **Extract a common representation.** An adapter, or AI for unfamiliar input, produces typed device/user/application records with attributes, identifiers, relationship references, evidence paths, and optional reliable observation time. Pydantic validates the same contract for both paths.
@@ -230,13 +188,13 @@ For file and paste inputs, the selected source supplies organization and identit
 5. **Project and persist.** Apply the conflict policy, upsert selected attributes and current edges, and store observations and run results in one short transaction. Recheck identities inside that transaction because preflight lookups alone cannot prevent races.
 6. **Respond.** Return distinct entity and edge counts, quarantine counts, unresolved references, and bounded warning details with source record paths.
 
-Proposed operational limits are 1 MiB per upload, 1,000 extracted entity records, 5,000 relationship assertions, and bounded parser nesting. Oversize input is rejected, never silently truncated. These are per-request limits, not total database cardinalities.
+Each upload is limited to 1 MiB, 1,000 extracted entity records, and 5,000 relationship assertions. Parser nesting is bounded too. Inputs that exceed a limit are rejected rather than truncated. These limits apply per request, not to the whole database.
 
 ### Source authority, freshness, and conflict
 
-CMDB sources disagree because they observe different things, update at different times, or contain mistakes. We need a repeatable policy so the final answer does not depend on upload order. **File format says nothing about trust.**
+Sources disagree. They may have observed an item at different times, track different details, or simply contain mistakes. The selection policy needs to produce the same result regardless of upload order. A file's format does not tell us how much to trust it.
 
-For each scalar attribute, apply this small deterministic policy to retained nonmissing observations:
+For each scalar attribute, the service compares the retained observations that supply a value:
 
 1. If a configured source is authoritative for that attribute, consider its nonmissing observations first. The prototype allows one designated authority per attribute; weaker evidence remains available for provenance and for filling attributes the authority never supplies.
 2. Within the eligible evidence, select the most recent **reliable observation** only when all competing observations can be temporally compared. Equal values do not conflict. If timestamps are missing on a competing value, or equal-time observations disagree, there is no defensible temporal winner.
@@ -244,9 +202,9 @@ For each scalar attribute, apply this small deterministic policy to retained non
 
 A configured export time may timestamp a snapshot if the source documents that meaning. A record's modification time may timestamp only the fields it actually covers. `received_at` records when the API saw an upload; it does not establish when its contents were true. **last_login and last_checkin are activity attributes, not observation timestamps.** An adapter must not use them to order inventory status, ownership, or profile data.
 
-This policy sometimes turns a previously selected field into an unresolved one when incomparable contradictory evidence arrives. That is deliberate: retaining whichever value arrived first would hide uncertainty and make ingestion order affect answers. Missing/null/blank values never erase known facts. Details distinguish missing from conflict; ordinary filters treat both as unavailable.
+A new contradiction can leave a previously selected field unresolved. Keeping the old value just because it arrived first would hide that disagreement. Missing, null, and blank inputs do not erase known facts. Detail responses distinguish a conflict from missing data; ordinary filters treat both as unavailable.
 
-The prototype recomputes affected fields from retained observations using a simple pure selection function. It needs no reconciliation queue or per-source confidence scores. Policy configuration is fixed for a database during a demonstration; changing it requires deliberate reprocessing, not an invisible background change. Automated correction, expiring old evidence, and source-health-based authority are production work.
+A pure selection function recomputes affected fields from the retained observations. There is no queue or confidence score. Changing the policy requires reprocessing the affected data; it does not silently update stored results. Automated correction, evidence expiry, and source-health rules would need more work.
 
 ### Relationships, provenance, and idempotency
 
@@ -258,9 +216,9 @@ An exact replay is recognized by organization, source, content hash, and policy 
 
 ### Transactions and failures
 
-Parsing and AI calls happen before taking a database write transaction. Valid records, quarantined evidence, projections, relationships, and the run summary then commit together. Quarantine is a documented successful processing outcome, not a hidden exception: those records make no identity or attribute changes. Unexpected validation/persistence failures roll back the entire run. A rejected malformed document is not archived in the database.
+Parsing and AI calls finish before the database write transaction begins. Valid records, quarantined evidence, current field values, relationships, and the run summary then commit together. A quarantined record is a processing outcome: its evidence is saved, but it does not change identities or attributes. Unexpected validation or persistence failures roll back the entire run. Malformed documents rejected during parsing are not saved.
 
-SQLite uses foreign keys, WAL, and a short busy timeout. Unique constraints prevent duplicate keys and edges. On a concurrent replay, return the committed winner after rollback/recheck; otherwise return retryable 503 if contention prevents completion. A general multiwriter retry engine is deferred.
+SQLite uses foreign keys, WAL, and a short busy timeout. Writers acquire `BEGIN IMMEDIATE` before identity lookups so another writer cannot change those identities between lookup and insert. Unique constraints also prevent duplicate keys and edges. On a concurrent replay, return the committed winner after rollback/recheck; otherwise return retryable 503 if contention prevents completion. A general multiwriter retry engine is deferred.
 
 Example successful processing response:
 
@@ -281,7 +239,7 @@ Counts refer to extracted entity records and distinct CIs/edges; observations ar
 
 ## 7. AI integration
 
-**Implemented with mocked-provider verification and limited live smoke checks.** Initial sandbox connection attempts failed; later network-enabled requests reached OpenRouter. Ten unfamiliar synthetic fixtures passed selected-field, provenance, and replay checks across incremental reruns. Structured input uses pointer-only evidence; the extraction-v7 prompt demonstrates numeric IDs, canonical field normalization, and evidence spanning separate entity/assignment tables. Correction hints identify the failing path and common enclosing source scope without changing the validator or exposing private hints in API errors. See [fixture coverage and completeness limits](../input_data/unfamiliar/README.md).
+The extraction pipeline has mocked-provider tests and optional live checks using [synthetic fixtures](../input_data/unfamiliar/README.md). The live checks cover selected fields, provenance, and replay. They do not measure how reliably the model handles arbitrary exports.
 
 AI is useful when the source's layout or meaning is unfamiliar, and when a person asks a question without knowing the database schema. It is a poor authority for persistent identity decisions. Separating interpretation from execution preserves useful flexibility without granting the model database control.
 
@@ -291,13 +249,13 @@ These checks reduce invented facts but cannot prove every semantic interpretatio
 
 Malformed/schema-invalid model output gets one corrective retry with a bounded copy of the previous output and a validation hint. Provider envelope failures, truncation, and transport failures are returned directly rather than blindly retried. Persistent invalid output returns 502; provider unavailability/rate limiting returns 503; timeout returns 504. No data is written before validation succeeds. Tests use an injected mock client; the optional live provider smoke command is documented in the README. Record-scoping and explicit boolean checks strengthen evidence validation but do not prove every semantic association. Strict record-local evidence may reject ambiguous or mixed-style citations; correction requests consistent pointers or quotes.
 
-Questions and source text are untrusted input, including any embedded instructions. Models receive neither credentials nor executable database tools. Extraction sees only the uploaded content needed for that request; the planner sees the question and allowed query vocabulary. Real inventory can contain personal or confidential data, so operator approval of provider/model data handling is a deployment concern. The prototype will not log complete payloads, prompts, or secrets by default.
+Questions and source text are untrusted input, including any embedded instructions. Models receive neither credentials nor executable database tools. Extraction sees only the uploaded content needed for that request; the planner sees the question and allowed query vocabulary. Real inventory can contain personal or confidential data, so operator approval of provider/model data handling is a deployment concern. The prototype does not log complete payloads, prompts, or secrets by default.
 
 ## 8. Natural-language querying
 
-**Phases 5–6 are implemented: POST /ask/plan and `python -m app.querying` preview plans; POST /ask resolves references, executes, and returns grounded answers.**
+`POST /ask` plans a question, resolves its references, and executes a validated database query. `POST /ask/plan` previews a plan without reading the database. The CLI executes questions by default; `--plan-only` requests a preview.
 
-The preview returns `executed: false` and a discriminated `result`: `planned` with a versioned plan, `unsupported` with a reason and fixed example questions, or `clarification_required` with a question about intent. It never reads the database. Database-dependent ambiguity and candidate IDs are handled by the deterministic resolver at /ask; the model cannot invent candidates. Names, emails, hostnames, and CI UUIDs in plans must occur in the question, with configured aliases preserved literally for later resolution. Request pagination overrides model pagination. The shared directed relationship vocabulary and per-type field registry are validated before returning a plan. One correction attempt is allowed; upstream errors are returned directly. These checks constrain structure and references but cannot prove semantic interpretation. The additive preview endpoint allows Phase 5 to be tested independently without pretending to answer questions.
+A preview returns `executed: false` and one of three results: a versioned plan, an unsupported reason with example questions, or a request for clarification. The model can ask about unclear intent, but database lookup handles ambiguous names and candidate IDs later. Names, emails, hostnames, and UUIDs must come from the question. Pagination comes from the request. The service validates fields and relationship directions and allows one correction attempt for an invalid plan. These checks constrain the output, although they cannot guarantee that the model understood the question correctly.
 
 A question such as “Which devices belong to users without MFA?” describes a small relational query. **Query planning** translates that meaning into a constrained data structure: select devices, follow their assignee edge, and test MFA=false on that user. The application validates the structure and builds the database query itself.
 
@@ -311,14 +269,11 @@ flowchart LR
   D --> A[Template answer with evidence limitations]
 ```
 
-
-
 The LLM never receives the entire CMDB, and arbitrary SQL is never accepted. Answer text is built deterministically from actual query results; a second narrative model call adds little value in this prototype.
 
 ### Limited plan schema
 
 A version-1 executable plan has:
-
 
 | Field             | Meaning                                                                                                                    |
 | ----------------- | -------------------------------------------------------------------------------------------------------------------------- |
@@ -327,7 +282,6 @@ A version-1 executable plan has:
 | `where`           | AND of scalar predicates: `{field, operator, value}`. Operators eq, in, is_null; is_null omits value.                      |
 | `exists`          | AND of related-entity constraints containing relation, direction (out/in), target_kind, where, and optional nested exists. |
 | `limit`, `offset` | Bounded list pagination. Count ignores pagination. Request envelope values override model proposals.                       |
-
 
 All models forbid extra fields. A registry permits fields by type: device hostname/os_family/status/encrypted; user name/email/team/status/mfa_enabled; application name/app_type/owner_team; plus exact ci_id for each type. Values must match field types. Unknown/conflicted values satisfy is_null and do not satisfy eq false.
 
@@ -357,20 +311,19 @@ Every related constraint means **there exists one related entity satisfying all 
 
 The compiler uses correlated EXISTS expressions and bound parameters against fixed SQLAlchemy models. Edge direction and target type are checked against the relationship registry. Counts count root CIs before pagination; EXISTS avoids duplicate rows from many relationships. Lists order by internal CI ID. Exact application name references go through configured aliases and database identifier lookup; multiple matches produce clarification rather than arbitrary selection.
 
-### Phase 6 execution details and adjustments
+### Query execution and reference lookup
 
-The compiler uses SQLAlchemy Core aliases for the fixed CI/subtype/relationship tables, while persistence continues using the ORM. This keeps self-kind application dependencies and mixed-type traversals explicit. The service revalidates plans at the execution boundary, resolves references, and runs counts, pagination, projections, and warnings in one read transaction. The provider call completes before any database session is opened. Answer text is a deterministic summary of the total and returned page; it does not invent explanations or make a second model request.
+The compiler uses SQLAlchemy Core aliases to query CI, subtype, and relationship tables. Aliases make it possible to distinguish two applications in a dependency query, or follow a path through different entity types. Writes still use the ORM. Before execution, the service validates the plan again and resolves its references. Counts, page results, and coverage warnings share one read transaction. The provider call finishes before the database session opens. Answer text summarizes the total and returned page without another model call.
 
 Literal names, hostnames, and emails match exact current attributes with SQLite ASCII case-insensitive equality. Non-ASCII characters retain exact matching semantics; full Unicode collation is deferred. Application-name lookup also checks canonical identifiers in configured app-name authorities using each source's normalization rules. Raw-name and alias matches are combined: if they identify different CIs, clarification is required. No fuzzy matches, cross-authority alias expansion, or identity merges occur. Unmatched references yield empty membership plus a missing-reference warning. For IN, known values still match and each missing value is disclosed. Lookup does not assume a unique name even when other predicates would narrow the eventual result.
 
-The returned plan preserves the user's literal names; `resolved_references` separately records the internal ID chosen for each reference (null if missing). Ambiguity returns up to 20 candidates in UUID order and a full `candidate_total`; rephrase with a candidate's internal UUID. As a defensive operational addition, execution allows at most 100 distinct literal reference values across the entire plan, otherwise returning unsupported rather than weakening it. Existing per-node plan bounds remain unchanged. No database tables, migrations, or new dependencies are needed.
+The returned plan preserves the user's literal names; `resolved_references` separately records the internal ID chosen for each reference (null if missing). Ambiguity returns up to 20 candidates in UUID order and a full `candidate_total`; rephrase with a candidate's internal UUID. Execution also limits the whole plan to 100 distinct literal references. A plan over that limit returns unsupported rather than dropping conditions. The per-node limits still apply.
 
 Coverage warnings count distinct reachable CIs along each path, applying ancestors' scalar filters but omitting sibling/descendant EXISTS and the current node's filters. This deliberately exposes evidence that would disappear under the requested filter; counts can overlap and are not additional matches. Unknown and explicitly conflicted queried attributes are disclosed separately. is_null intentionally selects unknowns, so it does not emit an unknown-field exclusion warning. Reference-only CIs and conflicting assignments are also disclosed. Unresolved relationship counts refer to retained observations, including repeated observations, not distinct real-world edges. Outgoing checks use reachable sources plus unlinked observations; incoming checks are organization-wide because unresolved targets cannot be attached to the query. Missing-edge checks are organization/type-wide. Every answer states that recorded evidence is not a complete live directory, and zero totals receive an explicit absence-of-evidence warning.
 
-These checks are bounded by the plan shape and use SQL aggregates rather than loading the database into memory. They are intentionally conservative, not universal completeness scoring or causal explanations. Reusing inventory projections keeps response attributes consistent, at the cost of extra bounded ORM reads per page. Read-only execution needs no transaction retries or write lock. Busy databases use the existing sanitized 503 error contract.
+Coverage checks use SQL aggregates and follow the bounded plan rather than loading the database into memory. They flag known gaps; they cannot measure overall completeness or explain what caused a result. Reusing inventory projections keeps the response consistent with the inventory endpoints, though it adds ORM reads for each page. Queries do not acquire a write lock. If the database is busy, the API returns the same sanitized 503 response used elsewhere.
 
 ### Coverage of required questions
-
 
 | Question pattern                                             | Plan                                                                                         |
 | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
@@ -381,9 +334,6 @@ These checks are bounded by the plan shape and use SQL aggregates rather than lo
 | Devices assigned to users without MFA who use an application | Same assigned_to constraint, with a nested outgoing uses constraint on that user.            |
 | Applications depending on a named application                | application with outgoing depends_on to that target.                                         |
 | Number of active devices                                     | count device where status eq active.                                                         |
-
-
-
 
 ### Answers and limitations
 
@@ -397,17 +347,15 @@ POST /ingest, POST /ingest/raw, GET /ingest/sources, and inventory GET endpoints
 
 All endpoints return JSON. List responses use `{data,total,limit,offset}` with stable ID ordering. Defaults are limit=50 and offset=0; maximums are 100 and 10,000. IDs are UUIDs, timestamps are UTC ISO 8601. No endpoint implicitly excludes inactive users or reference CIs.
 
-
-| Endpoint       | Request                                         | Success response                                                                                                         | Expected errors                                                                                                |
-| -------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
-| `POST /ingest` | Multipart file, direct raw body, or legacy envelope from section 6.                        | 200 run summary, replay flag, counts, quarantine and warnings.                                                           | 413 limit exceeded; 422 malformed/invalid input or unknown configuration; 502/503/504 AI failure; 503 DB busy. |
-| `GET /devices` | Optional status, os_family, limit, offset.      | 200 paginated common fields and device attributes, assigned_user_id or null.                                             | 422 invalid filter/pagination; 503 DB busy.                                                                    |
-| `GET /users`   | Optional status, mfa_enabled, limit, offset.    | 200 paginated common fields and user attributes, including groups.                                                       | 422 invalid filter/pagination; 503 DB busy.                                                                    |
-| `GET /apps`    | Optional app_type, limit, offset.               | 200 paginated common fields and app attributes, reported_user_count and separately calculated observed_assignment_count. | 422 invalid filter/pagination; 503 DB busy.                                                                    |
-| `GET /ci/{id}` | UUID path, optional edge_limit and edge_offset. | 200 common fields, subtype attributes, identifiers, field_state, incoming/outgoing edges, and evidence summary.          | 404 missing CI; 422 invalid UUID/pagination; 503 DB busy.                                                      |
-| `POST /ask/plan` | Question (1–2,000 characters), limit 1–100, offset 0–10,000. | 200: executed=false, planner_version, result (planned/unsupported/clarification_required). No database access. | 422 invalid request; 502 invalid model output; 503 unavailable; 504 timeout. |
-| `POST /ask`    | Question (1–2,000 characters), limit, offset.   | 200 answered, unsupported, or clarification_required response.                                                           | 422 invalid envelope; 502/503/504 AI failure; 503 DB busy.                                                     |
-
+| Endpoint         | Request                                                             | Success response                                                                                                         | Expected errors                                                                                                |
+| ---------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| `POST /ingest`   | Multipart file, direct raw body, or legacy envelope from section 6. | 200 run summary, replay flag, counts, quarantine and warnings.                                                           | 413 limit exceeded; 422 malformed/invalid input or unknown configuration; 502/503/504 AI failure; 503 DB busy. |
+| `GET /devices`   | Optional status, os_family, limit, offset.                          | 200 paginated common fields and device attributes, assigned_user_id or null.                                             | 422 invalid filter/pagination; 503 DB busy.                                                                    |
+| `GET /users`     | Optional status, mfa_enabled, limit, offset.                        | 200 paginated common fields and user attributes, including groups.                                                       | 422 invalid filter/pagination; 503 DB busy.                                                                    |
+| `GET /apps`      | Optional app_type, limit, offset.                                   | 200 paginated common fields and app attributes, reported_user_count and separately calculated observed_assignment_count. | 422 invalid filter/pagination; 503 DB busy.                                                                    |
+| `GET /ci/{id}`   | UUID path, optional edge_limit and edge_offset.                     | 200 common fields, subtype attributes, identifiers, field_state, incoming/outgoing edges, and evidence summary.          | 404 missing CI; 422 invalid UUID/pagination; 503 DB busy.                                                      |
+| `POST /ask/plan` | Question (1–2,000 characters), limit 1–100, offset 0–10,000.        | 200: executed=false, planner_version, result (planned/unsupported/clarification_required). No database access.           | 422 invalid request; 502 invalid model output; 503 unavailable; 504 timeout.                                   |
+| `POST /ask`      | Question (1–2,000 characters), limit, offset.                       | 200 answered, unsupported, or clarification_required response.                                                           | 422 invalid envelope; 502/503/504 AI failure; 503 DB busy.                                                     |
 
 Common CI fields are id, kind, display_name, is_reference, created_at, and updated_at. Each list item contains an `attributes` object for its subtype and a `has_conflicts` flag. Full raw observations are excluded from lists. Detail evidence includes source ID, run ID, observation ID, record path, reliable observation time if known, and selected/conflicting values. Detail returns at most 20 recent observation summaries with total count; raw evidence browsing is deferred. Edges are paginated independently, ordered by direction/type/edge ID. Application owner-team is an attribute; identified human owners are owned_by edges.
 
@@ -455,10 +403,9 @@ A keyless but otherwise valid record is quarantined; the validation error above 
 
 ## 10. Sample Data and Integration Testing
 
-The supplied files are adapter fixtures and integration tests, not global identity or precedence rules. This section contains their source-specific interpretations. Tests will reuse the unchanged files and provide separate source configuration. Synthetic fixtures exercise cases the supplied data does not contain.
+The supplied files are adapter fixtures and integration tests, not global identity or precedence rules. This section contains their source-specific interpretations. Tests reuse the unchanged files with separate source configuration. Synthetic fixtures exercise cases the supplied data does not contain.
 
 ### What each fixture exercises
-
 
 | File                   | Structure, fields, and extracted CIs                                                                                                                                                                                   | Identity, relationships, and edge cases                                                                                                                                                                                                                                                                                                     |
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -467,7 +414,6 @@ The supplied files are adapter fixtures and integration tests, not global identi
 | `sample_hardware.yaml` | inventory.metadata and nested devices, with assigned_to, hardware, network, operating_system, security, location, status.                                                                                              | Export timestamp is available. User email/employee ID permit three hardware-user CIs and identified assignments. Hardware/model/specification, OS/version/build, encryption, site, operational state, and optional compliance/security fields are available. Secondary fields stay in evidence. John is deactivated; normalize to inactive. |
 | `sample_okta.json`     | Array of nine users, each with user_id, name, email, groups, apps, mfa_enabled, last_login, status.                                                                                                                    | 25 access assignments to 15 distinct application labels. Carlos S., Michael Brown, and Alex Johnson explicitly lack MFA; Alex is suspended. No export time. Login does not timestamp the account record. Groups are not a single team.                                                                                                      |
 | `sample_app.json`      | inventory_metadata, six applications, summary. Common fields: app_id, name, vendor, app_type, category, deployment, owner, users_count, integrations, SSO. Optional costs/renewals or server location/version/contact. | Explicit export time. Six catalog apps and 16 directed integrations to 13 target labels. Owner values are teams, not people. Reported user totals are not observed Okta assignment counts. Self-hosted apps can run in AWS; vendor labels do not establish dependencies.                                                                    |
-
 
 YAML hardware users have emails [john.doe@example.com](mailto:john.doe@example.com), [jane.doe@example.com](mailto:jane.doe@example.com), and [sarah.chen@example.com](mailto:sarah.chen@example.com); similarly named Okta accounts use [john.d@example.com](mailto:john.d@example.com), [jane.d@example.com](mailto:jane.d@example.com), and [s.chen@example.com](mailto:s.chen@example.com). No supplied stable identifier bridges those pairs. The tests must preserve separate users rather than manufacture joins.
 
@@ -489,7 +435,9 @@ Required ask tests include three MFA-false users, two macOS devices, five GitHub
 
 Test order independence, exact replay, equivalent reformatted uploads, reference enrichment, duplicate hostnames, conflicting device ID/serial matches, missing identifiers, and preserved conflicting values. Use synthetic records for positive two-hop MFA/app queries, dependencies, human ownership, and equal-time conflicts; the provided inputs cannot prove those paths work. Synthetic authority/freshness tests must also show that last_login, last_checkin, and arrival time never select a winner.
 
-### Phase 7 integration verification (implemented)
+<a id="phase-7-integration-verification-implemented"></a>
+
+### Integration tests
 
 `tests/integration` adds 31 HTTP-level tests using disposable file-backed SQLite databases. The real application and OpenRouter client run with a mocked HTTP transport; unintended real HTTP fails immediately. No API key file is read and no external service is needed. Existing focused tests remain in place.
 
@@ -499,11 +447,47 @@ A synthetic unfamiliar export covers all CI types and all five relationship type
 
 Fault injection checks projection failures and a pre-commit failure after flush. Every table's stored values must remain identical to its pre-request snapshot; retries must succeed without a phantom replay. Identity conflicts and keyless records, by contrast, intentionally commit quarantine evidence alongside valid records. Provider timeouts, rate limiting, server errors, invalid envelopes, malformed model JSON, invented IDs, and unsafe plans preserve prior data and recover after the provider response is corrected. Common 404/413/415/422/500/502/503/504 responses verify correlation and sanitized error behavior across the suite.
 
-One production-code correction was required: the shared error-response helper now attaches `X-Request-ID` directly, because unhandled 500s are rendered outside the correlation middleware's normal return path. The request ID already existed in the body. No schema, dependency, or sample-data changes were necessary. Optional live smoke commands remain available, but live provider connectivity/quality, process-level crash recovery, and load testing are not claimed by this suite.
+The failure tests caught a missing `X-Request-ID` header on unhandled 500 responses. Those errors are rendered outside the correlation middleware's normal return path, so the shared error helper now adds the header directly. The integration suite uses mocked provider responses; it does not verify live model quality, process-level crash recovery, or behavior under load.
 
-## 11. Implementation roadmap
+## 11. Build phases and code organization
 
-The structure should reflect responsibilities without creating a framework around every function:
+The work was built in eight phases, starting with the data model and adding ingestion, AI, and queries on top. These are implementation phases; the Git commits split some of them into smaller changes.
+
+### Phase 1: Models and contracts
+
+The first step was defining the nine tables, the shared CI identity, and the device, user, and application subtypes. This also established scoped identifiers, UTC timestamp handling, normalized Pydantic records, and the SQLite initializer. Database constraints and session validation enforce the rules that later ingestion relies on. Tests cover identifier uniqueness, subtype consistency, valid relationships, and nullable security fields such as MFA.
+
+### Phase 2: Deterministic ingestion
+
+Adapters were added for the five supplied layouts: hardware JSON, CSV, and YAML, Okta JSON, and application JSON. Each adapter produces the same normalized records while preserving the original data and source paths. Parsing and normalization were kept separate from persistence so input handling could be tested on its own. The preparation CLI made it possible to inspect sample output before writing anything to the database. Tests cover malformed input, unknown values, explicit false values, and configured timestamps.
+
+### Phase 3: Identity, evidence, and persistence
+
+This phase connected normalized records to stored CIs. The resolver uses exact scoped identifiers, quarantines conflicting identities, and creates reference CIs when a trusted key is available without full inventory details. Evidence selection handles source authority, comparable timestamps, and unresolved conflicts. Relationships, observations, and run results commit in one transaction, with replay detection to avoid duplicate imports. The ingestion and inventory endpoints expose this workflow. Tests cover aliases, conflicts, assignments, replay, and rollback.
+
+### Phase 4: Uploads and AI extraction
+
+File uploads and pasted input were connected to the preparation pipeline. Recognized layouts use deterministic adapters; unfamiliar content goes through OpenRouter extraction. Typed schemas and source-evidence checks validate the model's output before it reaches persistence. The provider client handles malformed responses, timeouts, and a bounded correction attempt. Mocked-provider tests cover these paths without needing credentials. Later refinements paired extracted values with their evidence and added synthetic unfamiliar-source checks.
+
+### Phase 5: Natural-language planning
+
+The next step was translating questions into a small query-plan schema. The planner is limited to allowed fields, typed filters, and directed relationships, with explicit unsupported and clarification responses. A preview endpoint and CLI allowed planning to be checked before execution was connected. Tests cover the required question patterns, invalid fields and values, traversal limits, literal references, and attempts to bypass the plan schema.
+
+### Phase 6: Query execution
+
+Validated plans were connected to SQLAlchemy queries and the `/ask` endpoint. This added exact reference lookup, alias handling, clarification for ambiguous names, counts, pagination, and evidence warnings. Nested relationship constraints preserve the meaning of questions about the same user across two hops. Tests distinguish unknown MFA from false MFA and use synthetic data for relationships the supplied fixtures cannot demonstrate. The CLI was later extended to execute questions while retaining a plan-only option.
+
+### Phase 7: Integration testing
+
+Integration tests brought the real API, persistence, provider client, and query services together with a mocked HTTP transport and temporary SQLite databases. They cover mixed uploads, fixture order, replay, restart persistence, concurrent requests, lock contention, and failure recovery. Failure injection also caught the missing request-ID header on unhandled errors, which was fixed in the shared error handler. These tests check that the pieces work together; live model quality is checked separately.
+
+### Phase 8: Documentation and demo
+
+The final phase added setup instructions, API examples, this design document, and a repeatable demo. The offline demo exercises the real services with explicit mocked plans and a temporary database. A live option uses the configured provider for the same questions. Recorded responses help show the API shape, and the coding-session transcript documents the development conversation.
+
+### Code organization
+
+The main modules follow the responsibilities described above:
 
 ```text
 app/
@@ -527,40 +511,21 @@ pytest.ini
 README.md
 ```
 
+### Running the demo
 
-| Phase                                | Work and completion gate                                                                                                                       | Required verification                                                                                                                                               | Budget |
-| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| 1. Models and contracts              | Project skeleton, settings, SQLite session, tables, Pydantic normalized contract.                                                              | Key/FK constraints, nullable MFA, subtype checks, typed edges, assignment uniqueness.                                                                               | 50 min |
-| 2. Deterministic ingestion           | Adapters for every supplied structure, common normalization, envelope validation.                                                              | All five files map correctly; malformed structure and false/unknown cases covered.                                                                                  | 60 min |
-| 3. Identity, evidence, relationships | Namespaces, aliases, resolution/quarantine, authority/freshness selection, transactional upsert/replay, list/detail routes.                    | Duplicate keys, conflicting identities, missing keys, order-independent projections, preserved conflicts, edge deduplication, expected configured fixture outcomes. | 90 min |
-| 4. AI extraction                     | Injected OpenRouter client, schema/evidence validation, bounded retry.                                                                         | Mock valid/invalid outputs, invented identifiers, timeout, failure without writes.                                                                                  | 30 min |
-| 5. Natural-language planning         | Limited plan schema and prompt, unsupported/clarification branches.                                                                            | Plans for required question patterns, invalid fields/types/depth, ambiguous names, injection attempts.                                                              | 30 min |
-| 6. Query execution                   | EXISTS compiler, counts, pagination, answer templates, focused evidence warnings.                                                              | Same-person nested semantics, NULL versus false, distinct root counts, positive synthetic dependency/two-hop cases.                                                 | 50 min |
-| 7. Integration testing               | End-to-end API flow and rollback/error contracts on temporary SQLite.                                                                          | Fixture permutations, replay, quarantine, transaction rollback, uniform errors; optional live AI smoke test.                                                        | 40 min |
-| 8. Documentation/demo                | Update planned status to actual capabilities, reproducible setup/launch/test commands, ingest/query demo, sanitized AI-development transcript. | Fresh-environment demo and README examples match actual responses.                                                                                                  | 25 min |
+`python -m app.demo` creates a temporary SQLite database, uploads the five supplied files through the API, inspects provenance, checks replay across upload formats, and asks the seven sample questions. It prints the actual JSON responses. The default run uses plans from `examples/demo_questions.json` through a mocked HTTP transport; validation and query execution still use the real services. The server's normal planner does not use those fixtures.
 
+Use `--live` to send the same questions to the configured provider. This can incur charges, and the demo fails if the answers differ from the fixture expectations. The offline run needs no key and leaves the application database alone. Both modes dispose of their engines and remove temporary files when they finish or fail.
 
-Total: **6 hours 15 minutes**, leaving 45–105 minutes within the assignment window. The riskiest work is identity/evidence handling, so it gets the largest block. Avoid adding a reconciliation UI, general history engine, or elaborate retry machinery. If integration takes longer, reduce optional extracted attributes and presentation polish rather than skipping core ingest/query behavior or tests.
+Selected offline responses are saved in [demo-output.json](demo-output.json). The [README](../README.md) has setup and verification commands. The [Codex session transcript](codex-session.md) records the development conversation.
 
-The README now includes dependency installation, environment settings, database initialization, server launch, pytest, and a reproducible ingestion demonstration. AI setup, raw-upload examples, and natural-language query examples are documented. Delivery remains private as the assignment requests. AI-development documentation should describe actual assistance and include sanitized transcripts; this design was prepared with Codex from the assignment and local files.
-
-**All eight phases are complete within the documented prototype scope.** Phase 8 provides a reviewed README, isolated offline/live demo, recorded API response examples, and genuine curated coding-session excerpts. Planning, deterministic execution, and grounded answers are complete, including a preview API and CLI. Extraction already uses the shared validated-record and transactional persistence boundaries.
-
-### Phase 8 documentation and demo (implemented)
-
-The README now starts with setup and a one-command review path, then explains the API, database/technology choices, identity/evidence tradeoffs, runtime AI, and operational limits. `python -m app.demo` creates a temporary SQLite database, uploads all five files through the API, inspects provenance, verifies cross-transport replay, and executes all seven sample questions. It prints actual JSON responses. Offline plans come from `examples/demo_questions.json` via a mocked HTTP transport; the real validation and execution services still run. That fixture mapping belongs only to the demo and is never used by the server's normal planner.
-
-`--live` is explicit and uses the configured provider for the same questions; it may incur charges and fails if answers diverge from fixture expectations. The default demo needs no key and changes no application database. Engines are disposed and temporary files removed on success/failure. `docs/demo-output.json` records selected real offline responses. `docs/ai-development.md` documents assistance and includes genuine excerpts from this conversation, clearly labeled as a curated sample rather than a complete export.
-
-The offline CLI, temporary-database cleanup, full test suite, and startup/initialization are verified using the installed environment. A clean dependency download, Python 3.12 execution, and successful live provider calls are not claimed. These verification limits remain visible in the README rather than treating mocked output as live model success. No migrations, dependencies, or production features were added for this phase.
+The installed environment has been used for tests, database initialization, and the offline demo. A fresh dependency download and Python 3.12 run have not been verified. The separate live extraction checks described above should not be confused with the mocked demo results.
 
 ## 12. Limitations and production considerations
 
+### Scope
 
-
-### Planned prototype versus deferred work
-
-The planned prototype includes the six endpoints, configurable source/identity policies, supplied-format adapters, AI extraction for unfamiliar content, deterministic identity resolution, lightweight evidence/conflict flags, idempotent ingestion, typed relationships, and validated natural-language plans with bounded execution. Phases 1–8 supply models, preparation/extraction, identity/evidence reconciliation, transactional persistence, and inventory HTTP routes. Database, HTTP, and mocked-provider tests run successfully. Live extraction connectivity and selected fixture checks are verified; broad model quality and complete extraction remain unverified. Natural-language planning and execution are implemented.
+The prototype includes ingestion and inventory endpoints, configurable identity policies, adapters for the supplied layouts, AI extraction, retained evidence, replay detection, typed relationships, and natural-language queries. Database and HTTP tests cover these paths with mocked provider responses. Live extraction checks cover selected fixture fields; they do not establish general model accuracy or complete extraction.
 
 It intentionally excludes authentication, tenant authorization, fuzzy identity matching, automatic CI merging, historical graph queries, relationship revocation, streaming uploads, background jobs, arbitrary graph traversal, cost analytics, and full normalization of every source field. Additive access/group/integration data can become stale; responses describe observed evidence rather than a live authoritative directory. Unresolved records are retained and counted, but there is no reconciliation browser in this timebox.
 
@@ -571,9 +536,3 @@ Larger datasets would use object storage, asynchronous jobs, batch identifier lo
 SQLite serializes writes. A production deployment would move to PostgreSQL, use migrations, native UUID/timestamptz/JSONB, and transactional key/assignment locking or upserts with bounded retry. SQLAlchemy keeps most query logic portable; partial indexes and locking behavior still need database-specific tests. The initial indexes cover identity lookup, CI type, common filters, both edge directions, replay detection, and evidence lookup. Add further indexes only after inspecting representative query plans.
 
 Monitor ingest latency/counts, unresolved and quarantined records, attribute conflicts, replay rate, database lock errors, query latency, unknown-field coverage, AI validation failures, provider timeouts, and token/cost usage. Correlate logs with request/run IDs without using personal data as metric labels. Production also requires secrets management, provider data-handling review, access control, backup/restore, retention/deletion policy, and an auditable way to review identities and policy changes.
-
-### Decisions still needing review
-
-The architecture has conservative defaults, but deployment configuration must answer which identifier authorities are trustworthy, whether shared email/serial/name scopes are valid, and which sources own which attributes. Unconfigured authority does not become an implicit ranking. Application aliases and the fixture's shared hardware scope need explicit acceptance as test assumptions.
-
-The main behavioral choice to confirm is unresolved-conflict projection: this proposal exposes NULL with candidate evidence rather than retaining a stale-looking winner. Another choice is additive relationships: revocation and authoritative snapshot replacement are intentionally deferred. The exact OpenRouter model remains configurable and should be selected with a small extraction/planning smoke test during implementation.

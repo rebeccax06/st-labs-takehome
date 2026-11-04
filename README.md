@@ -114,6 +114,8 @@ flowchart TD
   DB --> A[Grounded results and limitations]
 ```
 
+
+
 The shared `configuration_items` table gives every entity an internal UUID. Joined type tables (`devices`, `users`, `applications`) store queryable attributes; `user_groups` stores group membership. `entity_identifiers` separates internal identity from external IDs scoped by organization, CI type, authority, and identifier type. A unique namespace/value key prevents collisions between unrelated source IDs.
 
 `relationships` stores directed, typed edges: assignment, application usage, dependencies, integrations, and human ownership. Foreign keys give every edge a consistent endpoint. Type compatibility and organization agreement are checked in the ORM unit of work; database constraints enforce keys, edge uniqueness, and one current device assignee. Bulk SQL bypasses some ORM invariants and is not an application write interface.
@@ -175,7 +177,7 @@ New sources are added through adapter registration or `adapter: "auto"`, with or
 
 Run `python -m pytest -q` for the full suite or `python -m pytest tests/integration -q` for the HTTP integration tests. Tests cover identity conflicts, unknown versus false, authority/freshness, all supplied layouts, atomic rollback, real SQLite locks, concurrent replay, provider failures, unsafe plans, bounded traversal, and grounded answers. Integration tests use temporary file-backed databases and block real HTTP. See the [integration test details](docs/design.md#phase-7-integration-verification-implemented).
 
-The test suite and offline demo run without provider credentials. Live OpenRouter extraction has smoke checks using synthetic text and JSON. Ten synthetic unfamiliar-source fixtures passed selected-field/provenance/replay checks across incremental live reruns; see [the fixtures and limitations](input_data/unfamiliar/README.md) and [recorded responses](docs/unfamiliar-live-results.json). This does not establish complete extraction or general vendor compatibility. Dependencies use compatible version ranges in `requirements.txt`, without a complete version lock. Python 3.14.2 has been tested; Python 3.12 is supported by the project configuration but has not been verified.
+The test suite and offline demo run without provider credentials. The live extraction checks use [synthetic fixtures](input_data/unfamiliar/README.md) to check selected fields, provenance, and replay. They do not measure complete extraction or general vendor compatibility. Dependencies use compatible version ranges in `requirements.txt`, without a complete version lock. Python 3.14.2 has been tested; Python 3.12 is supported by the project configuration but has not been verified.
 
 Uploads are UTF-8 JSON, CSV, YAML, or text: at most **1 MiB**, **1,000 normalized records**, and **5,000 relationship assertions**. Unfamiliar AI input has a smaller **64 KiB** limit. PDF, Excel, and image extraction are excluded. Query plans support list/count, eq/in/is_null, and at most **two hops**; execution accepts at most **100 distinct literal references**. Coverage/count queries may still scan a large dataset.
 
@@ -183,26 +185,8 @@ One organization is configured per deployment. There is no authentication or ten
 
 Production work would add access controls, PostgreSQL migrations and concurrent upserts, query budgets, batch processing, backup/restore and evidence retention, provider-data handling policies, and metrics for latency, locks, conflicts, quarantine, replay, AI validation, and provider cost. These features are outside the prototype’s scope.
 
-## AI-assisted development and delivery
+## AI usage
 
-Codex assisted with design, implementation, tests, and documentation. Human review guided the scope, conflict policy, identifier namespaces, and source configuration. [AI development notes and conversation excerpts](docs/ai-development.md) describe how AI was used and include a sample session. The offline demo and [response examples](docs/demo-output.json) provide a repeatable review path.
+Runtime AI extracts unfamiliar inventory input and translates questions into validated query plans. The prompts are in [extraction.md](app/ai/prompts/extraction.md) and [planning.md](app/querying/prompts/planning.md); deterministic code validates the results before database writes or queries.
 
-Submit the project as a **private repository or ZIP**, as requested by the assignment. Include source, `requirements.txt`, tests, `examples/`, `input_data/`, and documentation. Exclude `.venv`, `.env`, `token.txt`, database/WAL files, caches, and private credentials. `.gitignore` covers git submissions; a ZIP must apply the same exclusions explicitly. No repository publishing or sharing is performed by the demo.
-
-The extraction system instructions live in [app/ai/prompts/extraction.md](app/ai/prompts/extraction.md), grouped by task, evidence, identity, fields, relationships, and examples. Python loads this file as the system message; uploaded data stays in a separate user message. Prompt revisions must update `PROMPT_VERSION` in `app/ai/extraction.py` because it participates in replay versioning. Mocked tests verify the extraction pipeline, not model accuracy; compare representative live extractions when evaluating prompt changes.
-
-Extraction uses separate typed device/user/application schemas. Each populated
-attribute bundles its value with required evidence; absent fields are null. Text
-extraction accepts quote evidence only, while structured extraction requires pointer
-evidence. OpenRouter extraction requests use strict structured output
-with closed objects and required nullable fields. Query planning retains its own
-schema settings. Local schema and source-evidence checks still run before writes.
-AI extraction failures include bounded, sanitized field paths and error categories
-in `error.details`; raw prompts, model values, and source quotes are not returned.
-
-Query planning instructions live in [app/querying/prompts/planning.md](app/querying/prompts/planning.md).
-The loader in `app/querying/prompts.py` reads the Markdown as the system prompt;
-`app/querying/planner.py` appends the allowed fields, directed relationships, and
-configured alias hints from code. The question and pagination are sent separately
-as the user message. Update `PLANNER_VERSION` when revising these instructions;
-this prompt version is separate from the query-plan schema's version number.
+Codex assisted with design, implementation, tests, and documentation, guided by the user. See the [coding session transcript](docs/codex-session.md).

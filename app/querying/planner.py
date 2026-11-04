@@ -15,7 +15,7 @@ from app.querying.prompts import SYSTEM
 from app.querying.registry import FIELDS, catalog
 from app.schemas.query_plan import AskPlanRequest, Equal, InValues, Planned, PlanningResponse
 
-PLANNER_VERSION = "query-plan-v2"
+PLANNER_VERSION = "query-plan-v3"
 UUID_PATTERN = r"(?<![\w-])[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}(?![\w-])"
 
 

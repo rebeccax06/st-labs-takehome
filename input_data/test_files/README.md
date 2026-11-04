@@ -2,7 +2,7 @@
 
 All data is synthetic. Existing samples are unchanged. Fixtures intentionally include invalid files.
 
-Upload via `/docs` → `POST /ingest`, selecting the source below and format `auto`. Use named sources for deterministic expectations; `uploaded-data` can route unfamiliar layouts to AI. No database writes or model calls were made when verifying these fixtures.
+Upload via `/docs` → `POST /ingest`, selecting the source below and format `auto`. Use named sources for deterministic expectations; `uploaded-data` can route unfamiliar layouts to AI.
 
 Example from the project root:
 
