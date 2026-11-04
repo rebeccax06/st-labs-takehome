@@ -1,3 +1,4 @@
+from conftest import provider_output
 import json
 
 from fastapi.testclient import TestClient
@@ -40,7 +41,7 @@ class FakeClient:
         value = self.outputs[index]
         if isinstance(value, Exception):
             raise value
-        return value if isinstance(value, str) else json.dumps(value)
+        return value if isinstance(value, str) else json.dumps(provider_output(value))
 
 
 def application(engine, fake):
@@ -240,7 +241,7 @@ def test_applications_mapping_is_unfamiliar_not_misclassified_as_known_array(eng
 def test_ai_attributes_use_the_shared_deterministic_normalizers(engine):
     output = extracted()
     output["records"][0]["attributes"]["os_family"] = "macOS"
-    output["records"][0]["attributes"]["status"] = "ACTIVE"
+    output["records"][0]["attributes"]["status"] = "active"
     output["records"][0]["attributes"]["hostname"] = " demo-laptop "
     with TestClient(application(engine, FakeClient([output]))) as client:
         response = client.post("/ingest/raw", content=TEXT, headers={"Content-Type": "text/plain"})

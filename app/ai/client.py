@@ -8,10 +8,26 @@ from app.ai.json_output import decode_object
 
 
 class AIError(RuntimeError):
-    def __init__(self, message, *, code="ai_invalid_response", status_code=502):
+    def __init__(self, message, *, code="ai_invalid_response", status_code=502, details=None):
         super().__init__(message)
         self.code = code
         self.status_code = status_code
+        self.details = details or []
+
+
+def strict_schema(schema):
+    """Compile a closed schema for provider strict mode without mutating Pydantic's schema."""
+    if isinstance(schema, list):
+        return [strict_schema(item) for item in schema]
+    if not isinstance(schema, dict):
+        return schema
+    result = {key: strict_schema(value) for key, value in schema.items() if key not in {"default", "discriminator"}}
+    if "oneOf" in result:
+        result["anyOf"] = result.pop("oneOf")
+    if result.get("type") == "object":
+        result["additionalProperties"] = False
+        result["required"] = list(result.get("properties", {}))
+    return result
 
 
 class OpenRouterClient:
@@ -41,7 +57,9 @@ class OpenRouterClient:
         payload = dict(model=self.settings.openrouter_model, messages=messages, temperature=0,
                        max_tokens=self.settings.openrouter_max_tokens, provider={"require_parameters": True},
                        response_format={"type": "json_schema", "json_schema": {
-                           "name": schema_name, "strict": False, "schema": schema}})
+                           "name": schema_name,
+                           "strict": schema_name == "cmdb_extraction",
+                           "schema": strict_schema(schema) if schema_name == "cmdb_extraction" else schema}})
         try:
             with httpx.Client(timeout=self.settings.openrouter_timeout_seconds, transport=self.transport) as client:
                 with client.stream("POST", self.ENDPOINT, headers={

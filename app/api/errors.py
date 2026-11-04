@@ -24,7 +24,7 @@ def response(request, status, code, message, details=None):
 def install_errors(app):
     @app.exception_handler(AIError)
     async def ai_error(request, exc):
-        return response(request, exc.status_code, exc.code, str(exc))
+        return response(request, exc.status_code, exc.code, str(exc), exc.details)
 
     @app.exception_handler(InputError)
     async def invalid_input(request, exc):

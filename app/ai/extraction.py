@@ -9,7 +9,7 @@ from pydantic import ValidationError
 from app.ai.client import AIError
 from app.ai.evidence import check_boolean, check_identifier_role, evidence_value, scoped_evidence
 from app.ai.json_output import decode_object
-from app.ai.schemas import Extraction
+from app.ai.schemas import extraction_contract, internal_extraction
 from app.ingestion.adapters.common import Context
 from app.ingestion.errors import InputError
 from app.ingestion.normalization import boolean, ip, mac, operating_system, status
@@ -20,7 +20,7 @@ from app.schemas.normalized import (
 )
 
 MAX_AI_BYTES = 64 * 1024
-PROMPT_VERSION = "extraction-v4"
+PROMPT_VERSION = "extraction-v8"
 MODELS = {"device": DeviceRecord, "user": UserRecord, "application": ApplicationRecord}
 IDENTIFIER_TYPES = {
     "device": {"device_id", "external_id", "serial"},
@@ -28,6 +28,31 @@ IDENTIFIER_TYPES = {
     "application": {"app_id", "app_name", "external_id"},
 }
 SYSTEM = (Path(__file__).parent / "prompts" / "extraction.md").read_text(encoding="utf-8")
+
+
+class EvidenceFailure(ValueError):
+    def __init__(self, path, category, message, *, correction_hint=None):
+        super().__init__(message)
+        self.correction_hint = correction_hint or message
+        self.detail = dict(path=path, type=category, message=message)
+
+
+def extraction_errors(exc):
+    """Never expose model values, dynamic field names, quotes, or exception contexts."""
+    if isinstance(exc, EvidenceFailure):
+        return [exc.detail]
+    if isinstance(exc, ValidationError):
+        allowed = {"records", "attributes", "identifiers", "relationships", "evidence", "value",
+                   "quote", "pointer", "ci_type", "identifier_type", "target", "display_name",
+                   "unsupported_reason", *DeviceRecord.model_fields["attributes"].annotation.model_fields,
+                   *UserRecord.model_fields["attributes"].annotation.model_fields,
+                   *ApplicationRecord.model_fields["attributes"].annotation.model_fields}
+        return [dict(path="/" + "/".join(str(part) if isinstance(part, int) or part in allowed
+                    else "field" for part in error["loc"] if part not in {"device", "user", "application"}),
+                     type=error["type"], message="Model output does not match the extraction schema.")
+                for error in exc.errors(include_input=False, include_context=False)[:10]]
+    return [dict(path="/records", type="invalid_model_output",
+                 message="Model output is invalid or its evidence cannot be verified.")]
 
 
 class Extractor:
@@ -44,12 +69,13 @@ class Extractor:
             ctx.snapshot(document)
         prompt = json.dumps(dict(format=request.format, parsed_input=document, raw_input=request.content if document is None else None), ensure_ascii=True)
         messages = [{"role": "system", "content": SYSTEM}, {"role": "user", "content": prompt}]
+        contract = extraction_contract(request.format == "text")
         for attempt in range(2):
-            raw = self.client.complete(messages=messages, schema=Extraction.model_json_schema())
+            raw = self.client.complete(messages=messages, schema=contract.model_json_schema())
             try:
                 # Reject duplicate keys instead of accepting the last contradictory value.
                 decoded = decode_object(raw)
-                extraction = Extraction.model_validate_json(json.dumps(decoded))
+                extraction = internal_extraction(contract.model_validate_json(json.dumps(decoded)))
                 if not extraction.records:
                     if extraction.unsupported_reason:
                         raise InputError("No supported devices, users, or applications were identified. Check the layout or select a known source.",
@@ -62,9 +88,13 @@ class Extractor:
             except (ValidationError, ValueError, RecursionError) as exc:
                 if isinstance(exc, InputError):
                     raise
+                details = extraction_errors(exc)
                 if attempt:
-                    raise AIError("AI extraction failed schema or evidence validation; no data was saved.") from None
-                if isinstance(exc, ValidationError):
+                    raise AIError("AI extraction failed schema or evidence validation; no data was saved.",
+                                  details=details) from None
+                if isinstance(exc, EvidenceFailure):
+                    hint = exc.detail["path"] + ": " + exc.correction_hint
+                elif isinstance(exc, ValidationError):
                     first = exc.errors(include_input=False, include_context=False)[0]
                     hint = "/".join(str(part) for part in first["loc"])[:160] + ": " + first["type"]
                 elif isinstance(exc, RecursionError):
@@ -73,37 +103,67 @@ class Extractor:
                     hint = str(exc)[:240]
                 messages.extend([
                     {"role": "assistant", "content": raw[:16384]},
-                    {"role": "user", "content": "Correct the complete extraction, not just one field. "
+                    {"role": "user", "content": "Correct the complete extraction, not just one field. Each attribute must be "
+                     "null or an object containing value and evidence. "
                      "Validation failure: " + hint + ". Use only record-local, verifiable evidence. "
+                     "For structured input, use pointers relative to parsed_input, not quotes or envelope paths. "
+                     "For text, use exact quotes from raw_input. "
                      "Omit unsupported or missing attributes; never invent identifiers."},
                 ])
         raise AssertionError("Unreachable extraction retry state")
 
     def _convert(self, extraction, request, ctx, document):
+        evidence_path = "/records"
         def evidence(value, parent=None):
-            if parent is not None:
-                return scoped_evidence(value, parent, document, request.content)
-            return evidence_value(value, document, request.content)
+            try:
+                if parent is not None:
+                    return scoped_evidence(value, parent, document, request.content)
+                return evidence_value(value, document, request.content)
+            except ValueError as exc:
+                correction_hint = str(exc)
+                if value.pointer is not None:
+                    correction_hint += f"; pointer={value.pointer!r}"
+                    if parent is not None:
+                        correction_hint += f"; record_scope={parent.pointer!r}"
+                        if parent.pointer is not None and "outside its record" in str(exc):
+                            common = []
+                            for left, right in zip(parent.pointer.split("/")[1:], value.pointer.split("/")[1:]):
+                                if left != right:
+                                    break
+                                common.append(left)
+                            enclosing = "/" + "/".join(common)
+                            correction_hint += f". Set this record's evidence.pointer to {enclosing!r}, the common enclosing source object. Keep precise field and relationship pointers."
+                raise EvidenceFailure(evidence_path, "invalid_evidence",
+                                      "Evidence must exist in the input and belong to its source record.",
+                                      correction_hint=correction_hint) from None
         def identifiers(kind, items, path, parent, attributes=None):
             result = []
-            for item in items:
+            nonlocal evidence_path
+            for item_index, item in enumerate(items):
+                identifier_path = path.replace("/ai/", "/") + f"/identifiers/{item_index}"
+                evidence_path = identifier_path + "/evidence"
                 if item.identifier_type not in IDENTIFIER_TYPES[kind]:
-                    raise ValueError("Identifier type does not match CI type")
+                    raise EvidenceFailure(identifier_path + "/identifier_type", "invalid_identifier_type",
+                                          "Identifier type does not match the configuration item type.")
                 observed = evidence(item.evidence, parent)
-                check_identifier_role(item, attributes or {})
+                try:
+                    check_identifier_role(item, attributes or {})
+                except ValueError:
+                    raise EvidenceFailure(identifier_path + "/value", "invalid_identifier_role",
+                                          "Display labels cannot be used as stable external identifiers.") from None
                 value = item.value
                 if item.evidence.pointer is not None:
                     if isinstance(observed, (dict, list, bool)) or observed is None:
-                        raise ValueError("Identifier evidence must be scalar")
+                        raise EvidenceFailure(evidence_path, "invalid_identifier_evidence", "Identifier evidence must point to a scalar value.")
                     observed = str(observed).strip()
                     if item.identifier_type in ctx.source.case_insensitive_identifiers:
                         observed, value = observed.casefold(), value.casefold()
                     if observed != value.strip():
-                        raise ValueError("Identifier is not the literal source value")
+                        raise EvidenceFailure(identifier_path + "/value", "identifier_not_in_source", "Identifier must match its source evidence literally.")
                 else:
                     flags = re.IGNORECASE if item.identifier_type in ctx.source.case_insensitive_identifiers else 0
                     if not re.search(r"(?<![\w@.+-])" + re.escape(value) + r"(?![\w@.+-])", observed, flags):
-                        raise ValueError("Identifier does not occur literally in evidence")
+                        raise EvidenceFailure(identifier_path + "/value", "identifier_not_in_source", "Identifier must occur literally in its source evidence.")
                 identifier = ctx.identifier(kind, item.identifier_type, item.value, path,
                                             trusted_only=item.identifier_type in {"email", "serial"})
                 if identifier is not None:
@@ -114,6 +174,7 @@ class Extractor:
         records = []
         for i, row in enumerate(extraction.records):
             path = f"/ai/records/{i}"
+            evidence_path = f"/records/{i}/evidence"
             observed = evidence(row.evidence)
             attributes = {key: (value.strip() or None) if isinstance(value, str) else value
                           for key, value in row.attributes.items()}
@@ -136,24 +197,31 @@ class Extractor:
             except InputError:
                 raise ValueError("Extracted attributes cannot be normalized") from None
             for field, value in attributes.items():
-                if value is None:
-                    continue
                 if field not in row.attribute_evidence:
-                    raise ValueError("Attribute evidence is missing")
+                    raise ValueError(f"Record {i} ({row.ci_type}): attribute {field!r} has no evidence. "
+                                     "Omit this attribute if absent from the input; otherwise add record-local evidence.")
+                evidence_path = f"/records/{i}/attributes/{field}/evidence"
                 original = evidence(row.attribute_evidence[field], row.evidence)
-                if original is None or original == "":
-                    raise ValueError("Cannot invent a missing attribute")
+                if value is not None and (original is None or original == ""):
+                    raise EvidenceFailure(evidence_path, "missing_source_value",
+                                          "A populated attribute must have a nonmissing source value.")
                 if isinstance(value, bool):
-                    check_boolean(value, original)
+                    try:
+                        check_boolean(value, original)
+                    except ValueError:
+                        raise EvidenceFailure(f"/records/{i}/attributes/{field}/value", "contradictory_evidence",
+                                              "Value contradicts the explicit source evidence.") from None
             relations = []
             for j, assertion in enumerate(row.relationships):
+                evidence_path = f"/records/{i}/relationships/{j}/evidence"
                 evidence(assertion.evidence, row.evidence)
+                evidence_path = f"/records/{i}/relationships/{j}/target/evidence"
                 evidence(assertion.target.evidence)
                 target = assertion.target
                 relations.append(RelationshipAssertion(
                     relation_type=assertion.relation_type, evidence=assertion.evidence,
                     target=EntityReference(ci_type=target.ci_type, display_name=target.display_name,
-                                           identifiers=identifiers(target.ci_type, target.identifiers, f"{path}/relationships/{j}", target.evidence),
+                                           identifiers=identifiers(target.ci_type, target.identifiers, f"{path}/relationships/{j}/target", target.evidence),
                                            evidence=target.evidence),
                 ))
             values = dict(ci_type=row.ci_type, record_key=path, organization_id=request.organization_id,

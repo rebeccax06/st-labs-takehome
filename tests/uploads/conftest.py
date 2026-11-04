@@ -10,3 +10,16 @@ def engine():
     initialize_database(engine)
     yield engine
     engine.dispose()
+
+
+def provider_output(value):
+    """Migrate compact legacy fixtures to the provider's typed fact objects."""
+    from copy import deepcopy
+    value = deepcopy(value)
+    for row in value.get("records", []):
+        evidence = row.pop("attribute_evidence", {})
+        row["attributes"] = {name: {"value": fact, "evidence": evidence.get(name, {})}
+                             for name, fact in row.get("attributes", {}).items()}
+        row.setdefault("identifiers", [])
+        row.setdefault("relationships", [])
+    return value

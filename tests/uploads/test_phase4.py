@@ -1,5 +1,7 @@
 """Phase 4 completion: defensive provider parsing, scoped facts, and live-check CLI."""
 
+from conftest import provider_output
+
 from copy import deepcopy
 import json
 
@@ -31,7 +33,7 @@ class Model:
         output = self.outputs[min(len(self.messages) - 1, len(self.outputs) - 1)]
         if isinstance(output, Exception):
             raise output
-        return output if isinstance(output, str) else json.dumps(output)
+        return output if isinstance(output, str) else json.dumps(provider_output(output))
 
 
 def app(engine, model):
