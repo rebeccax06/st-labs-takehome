@@ -24,7 +24,7 @@ def timestamp(value, path: str) -> datetime | None:
         if parsed.tzinfo is None or parsed.utcoffset() is None:
             raise ValueError("Timezone missing")
         return parsed.astimezone(UTC)
-    except ValueError as exc:
+    except (ValueError, OverflowError) as exc:
         raise InputError("Expected an ISO 8601 timestamp with timezone", path=path) from exc
 
 

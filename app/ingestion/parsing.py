@@ -126,10 +126,14 @@ def parse_content(content: str, format: str) -> Any:
                     raise InputError("More than 1000 records", code="limit_exceeded")
                 data.append(dict(zip(headers, row)))
             # Headers remain available even if the document contains zero rows.
-            return {"headers": headers, "rows": data}
+            document = {"headers": headers, "rows": data}
+            _check_tree(document)
+            return document
         else:
             raise InputError("No deterministic adapter for this format", code="unsupported_format")
-    except (json.JSONDecodeError, yaml.YAMLError, csv.Error, RecursionError) as exc:
+    except InputError:
+        raise
+    except (ValueError, yaml.YAMLError, csv.Error, RecursionError) as exc:
         raise InputError("Malformed input document") from exc
     _check_tree(data)
     return data

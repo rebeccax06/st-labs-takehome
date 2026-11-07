@@ -20,7 +20,7 @@ from app.schemas.normalized import (
 )
 
 MAX_AI_BYTES = 64 * 1024
-PROMPT_VERSION = "extraction-v9"
+PROMPT_VERSION = "extraction-v10"
 MODELS = {"device": DeviceRecord, "user": UserRecord, "application": ApplicationRecord}
 IDENTIFIER_TYPES = {
     "device": {"device_id", "external_id", "serial"},
@@ -121,6 +121,13 @@ class Extractor:
                 return evidence_value(value, document, request.content)
             except ValueError as exc:
                 correction_hint = str(exc)
+                if value.quote is not None and parent is not None and parent.quote is not None:
+                    correction_hint += (
+                        ". Set this record's evidence.quote to an exact contiguous span of raw_input "
+                        "containing all its field, identifier, and relationship quotes. For facts spread "
+                        "across sentences, use the entire raw_input as the record quote; keep precise "
+                        "field quotes. Do not reconstruct or paraphrase source text."
+                    )
                 if value.pointer is not None:
                     correction_hint += f"; pointer={value.pointer!r}"
                     if parent is not None:

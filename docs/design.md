@@ -1,18 +1,18 @@
 # AI-first CMDB: technical design
 
-This document explains how the CMDB combines inventory records, handles conflicting evidence, and answers questions about devices, users, and applications. It covers the implementation and the tradeoffs made for the [assignment](../STLabs_Backend_TakeHome_CMDB_Junior.md). For setup and commands, see the [README](../README.md#quick-start).
+This document explains how the CMDB combines inventory records, handles conflicting evidence, and answers questions about devices, users, and applications. It covers the implementation and the tradeoffs made for the [assignment](../STLabs_Backend_TakeHome_CMDB_Junior.md). For setup and commands, see the [README](../README.md#setup).
 
-The ingestion pipeline, database, inventory API, and natural-language queries are implemented. Most tests use mocked model responses. Separate live checks use synthetic fixtures to check selected fields, provenance, and replay; they do not establish complete extraction or general vendor compatibility.
+The main workflows are implemented: upload inventory, inspect saved items, and ask questions. Most tests replace the model responses so they can run offline. Separate live checks use synthetic data to check extraction and replay. Those checks tell us how the tested examples behaved; they do not establish support for every vendor export.
 
 ## 1. Overview and goals
 
-A configuration item (CI) is something an organization needs to track to understand its technology environment. This prototype models three kinds: **devices, users, and applications**. A laptop's operating system is an attribute; the fact that a person is assigned that laptop is a relationship. Relationships make a CMDB more useful than separate inventory lists: they let us ask which devices belong to people who lack MFA, or which applications depend on a particular service.
+A configuration item (CI) is something the organization tracks. This project handles **devices, users, and applications**. A laptop's operating system is an attribute. Its assignment to a person is a relationship. Keeping those connections lets us ask questions across inventories, such as which devices belong to users without MFA.
 
-The difficult part is combining evidence from different systems. Two exports may describe the same device using different identifiers, disagree about its status, or reference a person only by name. The CMDB must distinguish what it knows from what it cannot safely infer.
+Combining exports is harder than reading their formats. Two systems might use different IDs for the same device, disagree about its status, or identify its owner only by name. The design needs a way to handle each case without making a bad match.
 
-The service accepts structured inventories and unfamiliar text, converts them into a common model, and uses explicit rules to identify entities and store their relationships. AI interprets unfamiliar inputs and natural-language questions. Application code validates those interpretations and handles identity, persistence, and database queries.
+Uploads are converted into a common record format before they reach the database. Known layouts have adapters; unfamiliar input can use AI extraction. AI also turns questions into query plans. The backend checks both kinds of output and handles matching, saving, and querying.
 
-The main priorities are reliable ingestion and decisions that can be explained from the evidence. New sources can use an adapter or AI extraction as long as they map to the three supported CI types and relationships. Adding a CI type or a queryable attribute requires a model change. The sample files do not set the database size; limits apply to individual uploads and queries.
+I focused on making uploads reliable and keeping enough evidence to explain the results. Another source can use this workflow if it maps to the existing CI types and relationships. A new CI type or queryable attribute needs a model change. Upload and query limits bound each request; they do not limit the database to the sample files.
 
 ## 2. Architecture at a glance
 
@@ -32,13 +32,13 @@ flowchart LR
   DB --> Answer[Rows, counts, and grounded answer]
 ```
 
-Two workflows share the data model. Ingestion turns source records into normalized entities and relationship assertions. Querying turns a question into a limited read plan. Both validate model output with strict Pydantic schemas.
+Uploads and questions use the same data model. An upload produces records and proposed relationships. A question produces a read-only query plan. Pydantic checks the model's output before either workflow can use it.
 
-Each part has a specific job: routes handle requests and responses, adapters understand source layouts, and ingestion services coordinate normalization, identity resolution, and persistence. The AI client calls the provider. The query compiler builds SQLAlchemy expressions from validated plans. This separation also lets most tests run without a network connection.
+Routes handle HTTP requests. Adapters read source-specific layouts, and ingestion services handle normalization, matching, and saving. The AI client calls OpenRouter; the query compiler turns validated plans into SQLAlchemy queries. Keeping these responsibilities separate makes each part easier to test, including tests that run without a network connection.
 
-Organization and source definitions live in a small versioned configuration file. Each source definition names its organization, source instance, adapter, identifier authorities, optional attribute authority, and timestamp semantics. Alias mappings are configuration too. Source names and mappings are not hardcoded into the resolver. Configuration is trusted operator input; uploaded documents cannot declare themselves authoritative or choose a different organization's identity scope.
+A versioned configuration file defines the organization and its sources. Each source specifies an adapter, which identifiers it can share with other systems, any attributes it is trusted to settle, and which timestamps are reliable. App aliases are configured there too. An uploaded file cannot give itself more authority or choose another organization's identifiers.
 
-Each deployment serves one configured organization. Stored identities and ingestion runs still carry organization IDs to keep their scope explicit. Tenant isolation and authorization would need additional work.
+The prototype serves one organization per deployment. IDs and upload history still include the organization so matching stays within that scope. Supporting multiple tenants would also require authentication and authorization.
 
 ## 3. Technology choices and tradeoffs
 
@@ -52,19 +52,21 @@ Each deployment serves one configured organization. Stored identities and ingest
 | pytest                                    | Unit tests for policy and integration tests for complete workflows. AI responses are mocked by default.                                                           |
 | Standard JSON/CSV readers and safe PyYAML | Deterministic parsing of recognized structures. A parser understands syntax; adapters still need to understand each source's meaning.                             |
 
-A relational database is a good fit because identity keys, typed attributes, and directed relationships need constraints and joins. A graph database would be useful for unrestricted deep traversals, but this design needs only bounded paths. A vector database would not solve entity identity or precise security filtering. Neither is needed for this timebox.
+I chose a relational database because matching IDs and maintaining relationships both benefit from constraints and joins. The queries follow short paths through the data, so a graph database would add setup without much benefit here. A vector database would not help with exact identity matching or filters such as MFA=false.
 
-Dependencies use compatible ranges in `requirements.txt`; there is no exact version lock yet. Environment settings select the OpenRouter model and credentials, with a local token-file option. Credentials should stay out of fixtures, source control, and development transcripts.
+Dependencies have compatible version ranges in `requirements.txt`, rather than an exact lock file. Environment settings choose the OpenRouter model and credentials; a local token file is also supported. Credentials should stay out of source control, test data, and coding transcripts.
 
 ## 4. Data model and entity relationships
 
-The model separates **internal identity**, **attributes**, and **evidence**. A CI gets an internal UUID that remains stable even when a hostname or email changes. Type-specific tables provide normal relational columns for queries. External identifiers link records from different systems to that internal identity.
+Each CI has an internal UUID, separate from its attributes and source evidence. The UUID stays the same when a hostname or email changes. Device, user, and application tables hold the fields used in queries. External identifiers connect incoming records to those internal IDs.
 
-**Provenance** means recording where a fact came from. If a device's status looks wrong, an engineer should be able to find the source, record, and observation that supplied it. The prototype keeps normalized observations and the original parsed record. It does not attempt a complete historical CMDB or an audit event platform.
+**Provenance** is the record of where a fact came from. If a device's status looks wrong, we need to find the source and observation that supplied it. The database keeps the normalized observation and original parsed record for that purpose. It does not provide a full historical CMDB or audit-event system.
 
 ### Tables
 
-SQLAlchemy uses joined-table inheritance to connect each CI to its subtype. UUIDs use `VARCHAR(36)` in SQLite. A custom datetime type restores UTC timezone information when SQLite returns a timestamp. JSON columns use SQLAlchemy JSON, and enum-like values use CHECK constraints. Initialization creates missing tables with `create_all`; it does not migrate an existing schema. Below, `!` means required and `?` means nullable. All `id` columns are primary keys; all listed references are foreign keys. Deletion is outside the public API.
+SQLAlchemy uses joined-table inheritance: a CI row links to one device, user, or application row. SQLite stores UUIDs as `VARCHAR(36)`. A custom datetime type restores UTC timezone information on reads, JSON fields use SQLAlchemy's JSON type, and CHECK constraints restrict enum-like values. Startup calls `create_all` to create missing tables; schema migrations are not implemented.
+
+In the table below, `!` means required and `?` means nullable. Every `id` is a primary key, and the listed references are foreign keys. There is no public delete endpoint.
 
 | Table                 | Columns                                                                                                                                                                                                                                                                                     | Constraints and initial indexes                                                                                                                                                                                    |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -78,9 +80,9 @@ SQLAlchemy uses joined-table inheritance to connect each CI to its subtype. UUID
 | `ingestion_runs`      | `id UUID!`, `organization_id TEXT!`, `source_id TEXT!`, `format TEXT!`, `payload_sha256 TEXT!`, `policy_version TEXT!`, `received_at DATETIME!`, `completed_at DATETIME!`, `result JSON!`                                                                                                   | UNIQUE `(organization_id,source_id,payload_sha256,policy_version)`. Stores committed processing outcomes, including warnings and quarantined records.                                                              |
 | `observations`        | `id UUID!`, `run_id UUID! FK ingestion_runs`, `record_key TEXT!`, `ci_id UUID? FK configuration_items`, `observed_at DATETIME?`, `raw_record JSON!`, `normalized_record JSON!`, `origin TEXT!`, `resolution_status TEXT!`                                                                   | UNIQUE `(run_id,record_key)`; index `(ci_id,observed_at)`. Origin adapter/ai; status resolved/unresolved/identity_conflict. A null ci_id is allowed for quarantined evidence.                                      |
 
-`field_state` explains how the current field values were chosen. Each observed attribute records either `selected` or `conflict`, along with the supporting observation IDs. A conflicted scalar is stored as NULL. A missing attribute is also NULL, but has no observed state. Queries can use ordinary columns, while detail responses explain why a value is unavailable. The display name is a convenience label, with kind plus internal ID as a fallback; it does not establish identity.
+`field_state` explains why an attribute has its current value. An observed field is marked `selected` or `conflict` and includes the supporting observation IDs. Both a missing value and an unresolved conflict appear as NULL in ordinary queries, but the detail endpoint tells them apart. `display_name` is just a readable label, with the kind and UUID as a fallback; matching does not rely on it.
 
-Observations store relationship assertions alongside normalized attributes, using a record path and resolved target IDs where available. They are attached to the originating CI, rather than having foreign keys to mutable relationship rows. This preserves evidence when a current assignment changes without introducing relationship history tables. Root and nested entity records get distinct stable paths within a run. Secondary source fields remain in the original record and are not automatically queryable attributes.
+An observation keeps the source's proposed relationships alongside its normalized attributes, including resolved target IDs when available. It belongs to the CI that supplied the information, rather than to a relationship row that might later change. This keeps the evidence for an old assignment without requiring a full relationship-history model. Nested records have their own stable paths within the upload. Extra source fields remain in the saved record, but are not automatically available as query filters.
 
 ### Core CMDB model
 
@@ -97,11 +99,11 @@ erDiagram
   configuration_items ||--o{ relationships : to
 ```
 
-Each CI must have exactly one matching subtype. The ORM session checks this, along with identifier scope and valid relationship endpoints, before flushing changes. Database constraints enforce unique keys and foreign-key references.
+Before saving, the ORM session checks that each CI has exactly one matching subtype, its identifiers have the right scope, and its relationships connect valid types. Database constraints also enforce unique keys and foreign-key references.
 
 ### Ingestion and provenance
 
-An ingestion run groups the records received in one upload. Observations preserve those records and link them to CIs when identity can be resolved. If an identity is missing or conflicting, the observation stays unlinked. The `configuration_items` table below is the same one shown above.
+Each upload creates an ingestion run. Its observations link to CIs when the identifiers can be resolved. Records with missing or conflicting identity stay unlinked so their evidence is still available. The diagram below uses the same `configuration_items` table as the core model.
 
 ```mermaid
 erDiagram
@@ -119,21 +121,21 @@ erDiagram
 | `integrates_with` | application → application               | A source's directed integration assertion. It does not imply a dependency or a reverse edge. |
 | `owned_by`        | application → user                      | Explicitly identified human owner. Team owners instead populate owner_team.                  |
 
-Edges connect CI IDs within the same organization. A device query follows outgoing assigned_to edges; finding dependents of an application follows incoming depends_on edges from that application. These are normal indexed joins, not string comparisons between names.
+Relationships connect CI IDs within one organization. To find a device's assignee, a query follows its outgoing `assigned_to` relationship. To find an application's dependents, it follows incoming `depends_on` relationships. These lookups use indexed IDs, so they do not depend on comparing names.
 
-NULL means the value is unavailable or unresolved. In particular, **unknown MFA is not false MFA**. API detail responses explain the reason for NULL through field_state and evidence. Boolean false always means an explicit, selected negative observation.
+NULL means the value is missing or could not be settled. For example, a user with unknown MFA status must not match a filter for MFA=false. The detail response includes `field_state` and evidence to explain the missing value. A stored boolean false requires an explicit observation selected by the conflict rules.
 
 ## 5. Identity resolution
 
-Entity resolution asks whether a new record describes an item already in the database. Choosing which status value to display happens later. Getting identity wrong could attach one person's access or MFA status to someone else, so matching uses stable identifiers and explicit configuration.
+Identity resolution decides whether an incoming record describes something already stored. This happens before choosing which of its attribute values to keep. A wrong match could give one person another person's access or MFA status, so the resolver uses stable identifiers and configured rules.
 
 ### Identifier namespaces
 
-An identifier is only meaningful within its issuing scope. A device ID from one inventory system cannot safely match the same text from another. Every namespace is constructed by one shared helper from this tuple:
+An ID needs context. Device 42 in one inventory system may have nothing to do with device 42 in another. A shared helper builds every identifier namespace from four components:
 
 `(organization_id, ci_type, authority_id, identifier_type)`
 
-Store it as a canonical JSON-array string, with no optional components or alternate spellings. Each component is a validated configuration ID; identifier-specific normalization applies to the separate value. For example:
+The helper stores that tuple as a canonical JSON-array string. All four components are required and validated. The identifier value is stored separately, using the normalization rules for that identifier type. For example:
 
 | Namespace tuple                                        | Value    | Interpretation                                                          |
 | ------------------------------------------------------ | -------- | ----------------------------------------------------------------------- |
@@ -141,32 +143,32 @@ Store it as a canonical JSON-array string, with no optional components or altern
 | `["org-a","device","inventory-east","device_id"]`      | `42`     | Another system's device 42; not the same key.                           |
 | `["org-a","device","approved-serial-domain","serial"]` | `SN-804` | Serial identity shared only by sources configured to trust this domain. |
 
-The unique constraint on `(namespace, value)` works because the helper always constructs the same string for the same scope, and the resolver checks that its organization and type match the CI. Identifier type is already part of that scope, so a separate column would duplicate it. This makes the namespace helper important: callers must use it consistently. Separate columns would be worth considering if reporting needed to query individual scope components.
+A unique constraint on `(namespace, value)` prevents the same scoped ID from belonging to two CIs. The helper gives the same scope the same string every time, and the resolver checks the organization's and CI type's agreement with the target item. Keeping the components in one namespace avoids duplicate columns, but it makes consistent use of the helper important. Separate columns would be easier if we needed frequent reports on individual scope components.
 
-External IDs retain their authority's case rules. Email can be a shared key only when configuration declares an appropriate authority and normalization rule. Generic lowercasing, shared mailboxes, recycled accounts, and unverified addresses are not universal identity guarantees. Serial numbers likewise require a trusted scope. The prototype drops blank identifiers and quarantines contradictory stable keys; broader placeholder-value screening remains the source adapter/configuration owner's responsibility. IPs, MACs, and hostnames remain descriptive evidence by default.
+Case handling follows the issuing system's rules. Email can link sources only when configuration explicitly allows that shared identifier and defines its normalization. Lowercasing an address alone does not make it safe: mailboxes can be shared or accounts recycled. Serial numbers also need a trusted scope. Blank identifiers are dropped, and conflicting stable IDs cause quarantine. Adapters or source configuration still need to screen out vendor-specific placeholder IDs. IPs, MACs, and hostnames are descriptive fields by default.
 
 ### Resolution behavior
 
-The resolver looks up **all** usable keys on a record before writing:
+Before saving a record, the resolver looks up **all** its usable identifiers:
 
 - If none match and at least one trusted key exists, create a CI and attach the keys.
 - If all matched keys point to one CI, reuse it and attach compatible new keys. Different systems can therefore identify one CI through a shared trusted key.
 - If keys point to different CIs, do not merge, update attributes, or attach identifiers. Quarantine that record as an identity conflict and preserve it in observations with the candidate CI IDs.
-- If no safe key exists, retain the record as unresolved evidence. A referenced person is not fabricated from a name alone.
+- If there is no usable identifier, keep the record as unresolved evidence. A name alone is not enough to create a person.
 
-For example, a new device record carries a local inventory ID resolving to CI A and a trusted serial resolving to CI B. Both keys are valid individually, but together they expose inconsistent identity evidence. The response flags the conflict; neither CI changes. A human must correct configuration/data before reprocessing. There is no automatic merge or reconciliation UI in the prototype.
+Suppose a device's local inventory ID matches CI A, but its trusted serial matches CI B. The resolver keeps the record as conflicting evidence and returns both candidate IDs. Neither existing CI is changed. Someone needs to correct the data or configuration before uploading it again; the prototype has no automatic merge or reconciliation UI.
 
-Duplicates with agreeing keys resolve to one CI, and unique edge constraints prevent duplicate relationships. Conflicting attribute values on those duplicates follow the evidence policy below. Two devices with the same hostname remain separate when their stable keys differ. Similar user names never trigger automatic merging, even when the names appear unique in the current database.
+Records with agreeing identifiers resolve to one CI, and unique constraints prevent duplicate relationships. If those records disagree about an attribute, the conflict policy below decides what to show. Two devices can share a hostname and still be separate items. User names are never enough to merge records, even if a name happens to be unique in the current database.
 
 ### Configured aliases and reference CIs
 
-Sources often reference applications using labels rather than IDs. Configuration maps a source-scoped label to a canonical application name within its declared name authority. A catalog record can then attach its external ID. Configuration can also declare an organization-specific name authority when those labels are known to be unique. Mapping an alias directly to an external ID would be a future extension. Normalization and aliases apply within that declared scope; they are not global product-name rules.
+An export may say that a user uses “GitHub” without providing an application ID. Source configuration can map that label to a canonical name within a declared name authority. A later catalog upload can add the app's external ID. Sources can share that authority when their labels are known to identify the same applications. Aliases stay within this configured scope. Mapping a label directly to an external ID is not implemented.
 
-A known key without detailed inventory can create a **reference CI**, with is_reference=true. Later inventory enriches that same CI. Without a shared-name guarantee or mapping, a label creates only a source-scoped reference, so two similarly named deployments do not collapse. Ambiguous mappings are configuration errors; ambiguous query names require clarification. If later data exposes two already-created CIs for one purported identity, use the same conflict path rather than adding an implicit merge feature.
+When an app has a usable identifier but no detailed inventory record, the backend creates a **reference CI** with `is_reference=true`. A later upload can fill in its details. Without a configured shared name authority, the reference stays local to its source, so similarly named deployments remain separate. Ambiguous alias mappings are configuration errors; ambiguous names in questions ask the user to clarify. If later evidence points to two existing CIs, it goes through the identity-conflict path.
 
 ## 6. Ingestion pipeline
 
-Ingestion has two jobs: translate different layouts into the same record shape, then reconcile what those records say. It preserves the original evidence so the result can be explained. An adapter only changes how a source is read; identity rules and database writes stay in the shared services.
+Ingestion first translates a source into common records, then matches and saves what those records report. Adapters handle the differences between layouts. The shared services apply the same identity and conflict rules regardless of format, and keep the source evidence so the saved result can be explained.
 
 ### Request and workflow
 
@@ -179,46 +181,48 @@ Ingestion has two jobs: translate different layouts into the same record shape, 
 }
 ```
 
-The selected source supplies the organization, adapter, and identity policy. Named adapters also specify the expected format: JSON, CSV, or YAML. Text and unfamiliar layouts can use AI extraction. The JSON envelope shown above carries the content itself; it does not ask the server to open a path or fetch a URL. Observation times come only from configured source fields.
+The selected source determines the organization, adapter, and identity rules. Named adapters expect JSON, CSV, or YAML; unfamiliar layouts and text can use AI extraction. In the envelope above, `content` contains the data itself. The server does not open a path or fetch a URL from that field. Observation times come from explicitly configured source fields.
 
-1. **Validate and parse.** Enforce source/organization configuration and bounded input. Use deterministic parsers for known structures; malformed known input returns an error rather than silently invoking AI. Safe YAML excludes object construction; reject duplicate mapping/header keys and malformed CSV rows.
-2. **Extract a common representation.** An adapter, or AI for unfamiliar input, produces typed device/user/application records with attributes, identifiers, relationship references, evidence paths, and optional reliable observation time. Pydantic validates the same contract for both paths.
-3. **Normalize.** Convert source-specific statuses, OS descriptions, booleans, timestamps, and addresses into common representations. Source field mappings belong to adapters/configuration. Preserve original values; do not turn an unknown encryption description into false or treat a group as a team.
-4. **Resolve identities and evidence.** Coalesce keys across the batch, resolve target references, and classify unresolved/identity-conflicting records. Build eligible entities before edges so forward references work. A failed target does not cause an invented relationship.
-5. **Project and persist.** Apply the conflict policy, upsert selected attributes and current edges, and store observations and run results in one short transaction. Recheck identities inside that transaction because preflight lookups alone cannot prevent races.
-6. **Respond.** Return distinct entity and edge counts, quarantine counts, unresolved references, and bounded warning details with source record paths.
+1. **Check the request and parse the input.** Validate the source, organization, and size limits. Known formats use their parsers. Broken JSON or CSV returns an error instead of falling back to AI. YAML uses a safe loader; duplicate keys, duplicate headers, and malformed rows are rejected.
+2. **Extract records.** The adapter, or AI for an unfamiliar layout, produces devices, users, and applications with their identifiers, attributes, relationships, and source evidence. Pydantic checks the resulting contract for either path.
+3. **Normalize fields.** Convert statuses, OS descriptions, booleans, timestamps, and addresses into the shared format while keeping their original values. An unrecognized encryption description stays unknown, and group membership does not automatically become a team.
+4. **Match items and relationship targets.** Check identifiers across the batch and flag records with missing or conflicting identity. Create eligible items before adding relationships so a record can refer to another item later in the file. An unresolved target produces a warning rather than a guessed link.
+5. **Save the result.** Apply the conflict rules and save current values, relationships, observations, and the run summary in one transaction. Identity lookups are checked inside that transaction to avoid races with another upload.
+6. **Return a summary.** Report record, item, and relationship counts, along with quarantined records and unresolved references. Warning details include the source record paths and are capped to keep the response bounded.
 
-Each upload is limited to 1 MiB, 1,000 extracted entity records, and 5,000 relationship assertions. Parser nesting is bounded too. Inputs that exceed a limit are rejected rather than truncated. These limits apply per request, not to the whole database.
+An upload can contain at most 1 MiB of content, 1,000 extracted entity records, and 5,000 relationship assertions. Unfamiliar input sent to AI has a smaller 64 KiB limit. Parsed documents allow up to 32 levels of nesting and 100,000 nodes, including CSV headers and rows. Oversized integers and timestamps that overflow during UTC conversion return input errors. Requests over these limits are rejected in full. The limits apply to one upload, not the size of the database.
 
 ### Source authority, freshness, and conflict
 
-Sources disagree. They may have observed an item at different times, track different details, or simply contain mistakes. The selection policy needs to produce the same result regardless of upload order. A file's format does not tell us how much to trust it.
+Sources can disagree because they took snapshots at different times, track different details, or contain mistakes. Upload order should not decide which one wins. The file format does not establish trust either.
 
-For each scalar attribute, the service compares the retained observations that supply a value:
+For each field with a single value, the service compares the stored observations:
 
-1. If a configured source is authoritative for that attribute, consider its nonmissing observations first. The prototype allows one designated authority per attribute; weaker evidence remains available for provenance and for filling attributes the authority never supplies.
-2. Within the eligible evidence, select the most recent **reliable observation** only when all competing observations can be temporally compared. Equal values do not conflict. If timestamps are missing on a competing value, or equal-time observations disagree, there is no defensible temporal winner.
-3. If different values remain without a winner, mark that field conflicted, project NULL, and return a warning. Preserve all candidates. A later upload cannot silently replace a known value merely by arriving later.
+1. Check whether configuration gives one source priority for this attribute. If so, use its nonmissing reports first. Other observations stay available as evidence and can fill fields the trusted source does not supply. Only one source can have this priority per attribute.
+2. Otherwise, use the latest reliable observation when all competing reports have comparable timestamps. Reports with the same value agree. If a conflicting report has no timestamp, or two reports disagree at the same time, timestamps cannot settle the conflict.
+3. When conflicting values remain, store NULL for the current field, keep every candidate, and return a warning. Uploading a file later does not make its values more trustworthy.
 
-A configured export time may timestamp a snapshot if the source documents that meaning. A record's modification time may timestamp only the fields it actually covers. `received_at` records when the API saw an upload; it does not establish when its contents were true. **last_login and last_checkin are activity attributes, not observation timestamps.** An adapter must not use them to order inventory status, ownership, or profile data.
+An export time can date a snapshot when the source documents that meaning and configuration explicitly selects it. A record's modification time can only date fields it actually covers. `received_at` is the time of upload, which may be much later than the data was collected. `last_login` and `last_checkin` describe activity; they cannot decide which status, owner, or profile value is newer.
 
-A new contradiction can leave a previously selected field unresolved. Keeping the old value just because it arrived first would hide that disagreement. Missing, null, and blank inputs do not erase known facts. Detail responses distinguish a conflict from missing data; ordinary filters treat both as unavailable.
+New contradictory evidence can make a previously usable value unresolved. Keeping the first value would hide the disagreement. Missing, null, and blank inputs do not erase a known value. Ordinary filters treat missing and conflicted fields as unavailable; the detail endpoint explains which case applies.
 
-A pure selection function recomputes affected fields from the retained observations. There is no queue or confidence score. Changing the policy requires reprocessing the affected data; it does not silently update stored results. Automated correction, evidence expiry, and source-health rules would need more work.
+The selection function recalculates affected fields from the observations already stored. Changing source policy requires reprocessing the affected data; it does not update existing results automatically. Confidence scores, automatic correction, evidence expiry, and source-health checks would need additional work.
 
 ### Relationships, provenance, and idempotency
 
-Assignment is single-valued, so competing assigned_to assertions use the same authority/freshness policy. If unresolved, expose no current assignment and preserve the candidate targets in evidence. Name-only assertions cannot override an identified assignee. Access, groups, integrations, dependencies, and human-owner assertions are additive sets in this prototype; omission is not a revocation. Integrations never become dependencies automatically.
+A device can have one current assignee, so competing `assigned_to` reports follow the same source and timestamp rules as scalar fields. If they cannot be settled, no current assignment is shown and the candidate targets remain in evidence. A name-only reference cannot replace an identified assignee.
 
-Each observation stores its source run, record path, parsed raw record, normalized evidence, observation time when reliable, and resolution outcome. The current field_state links selected/conflicting attributes and assignment to supporting observations. This is enough to debug an update without building full temporal relationship querying. CSV provenance preserves string-valued rows; it is not byte-perfect file archival.
+Access, groups, integrations, dependencies, and human-owner links accumulate across uploads. Leaving one out of a later file does not remove it. An integration is stored as an integration; it never automatically creates a dependency.
 
-An exact replay is recognized by organization, source, content hash, and policy version (including adapter and alias configuration). It returns the prior committed result with replayed=true and adds nothing. Reformatted equivalent data may add evidence, but must not duplicate CIs or edges. Stable unresolved record paths prevent duplication within a run. Corrected identities require a new policy version or corrected content to avoid replaying a quarantined result.
+Each observation records the upload, source record path, original parsed record, normalized evidence, resolution result, and a reliable observation time when available. `field_state` links the current attributes and assignment to those observations. This supports debugging updates, although historical relationship queries are not implemented. CSV rows are kept as parsed strings rather than an exact copy of the original file bytes.
+
+The backend recognizes an exact repeat using the organization, source, content hash, and policy version, including adapter and alias settings. It returns the previous result with `replayed=true` and adds no rows. Reformatting a file can create another observation, but it should not duplicate CIs or relationships. Stable record paths prevent duplicate unresolved records within a run. To reprocess a quarantined identity, correct the content or change the policy version; otherwise replay returns the same outcome.
 
 ### Transactions and failures
 
-Parsing and AI calls finish before the database write transaction begins. Valid records, quarantined evidence, current field values, relationships, and the run summary then commit together. A quarantined record is a processing outcome: its evidence is saved, but it does not change identities or attributes. Unexpected validation or persistence failures roll back the entire run. Malformed documents rejected during parsing are not saved.
+Parsing and any AI calls finish before the write transaction starts. The transaction then saves valid records, quarantined evidence, selected values, relationships, and the upload summary together. Quarantine keeps a record's evidence without applying its proposed changes. An unexpected validation or persistence failure rolls back the whole run. Documents rejected while parsing are never saved.
 
-SQLite uses foreign keys, WAL, and a short busy timeout. Writers acquire `BEGIN IMMEDIATE` before identity lookups so another writer cannot change those identities between lookup and insert. Unique constraints also prevent duplicate keys and edges. On a concurrent replay, return the committed winner after rollback/recheck; otherwise return retryable 503 if contention prevents completion. A general multiwriter retry engine is deferred.
+SQLite runs with foreign keys, WAL, and a short busy timeout. A writer acquires `BEGIN IMMEDIATE` before looking up identities, preventing another writer from changing them between lookup and insert. Unique constraints provide another check against duplicate IDs and relationships. If two requests repeat the same upload concurrently, the service checks for a committed result after rollback. If it still cannot finish because the database is busy, it returns a retryable 503. A general retry system for concurrent writes is not implemented.
 
 Example successful processing response:
 
@@ -235,29 +239,31 @@ Example successful processing response:
 }
 ```
 
-Counts refer to extracted entity records and distinct CIs/edges; observations are separate evidence records. An identity conflict yields a quarantined count and warning with candidate IDs. An attribute conflict can update a CI's projection to NULL and reports the affected field. Warning details are capped at 50, with full totals retained.
+The response counts extracted records, distinct CIs, and relationships separately from observations. An identity conflict adds to the quarantined count and returns candidate CI IDs. An attribute conflict may change the current value to NULL and produces a warning for that field. At most 50 warning details are returned, while the total warning count is kept.
 
 ## 7. AI integration
 
-The extraction pipeline has mocked-provider tests and optional live checks using [synthetic fixtures](../input_data/unfamiliar/README.md). The live checks cover selected fields, provenance, and replay. They do not measure how reliably the model handles arbitrary exports.
+Extraction is tested with mocked provider responses and optional live checks using [synthetic fixtures](../input_data/unfamiliar/manifest.json). The live checks upload the example files and check selected fields, supporting evidence, and repeat uploads. Other layouts still need to be tested separately.
 
-AI is useful when the source's layout or meaning is unfamiliar, and when a person asks a question without knowing the database schema. It is a poor authority for persistent identity decisions. Separating interpretation from execution preserves useful flexibility without granting the model database control.
+AI helps read unfamiliar exports and lets people ask questions without knowing the schema. I kept matching and database access in application code because a plausible model response is not enough reason to merge two identities or run a query.
 
-For unfamiliar input, OpenRouter receives bounded source content, the normalized record schema, supported relationship definitions, and instructions to preserve unknown values as missing. Extracted identifiers require source paths or quoted evidence spans. Pydantic checks types, lengths, counts, enums, timestamps, and references; literal identifier evidence is checked against the submitted content. An LLM-proposed identifier must still be allowed by source configuration before the resolver trusts it.
+For extraction, OpenRouter receives the input, the record schema, and the supported relationships. It is asked to leave missing facts unset and cite a source location or exact quotation for extracted identifiers and fields. Pydantic checks the output's types and limits. Evidence checks verify that identifier values appear in the submitted content. Source configuration still decides which identifier types and authorities can be trusted for matching.
 
-These checks reduce invented facts but cannot prove every semantic interpretation correct. AI-derived observations are labeled as such and remain inspectable. Recognized inputs use deterministic adapters; AI is not a fallback for broken known-source data. Adding an unfamiliar source still requires trusted organization/identity configuration even if no custom adapter is needed.
+Validation can catch malformed records and unsupported evidence, but cannot prove every association the model makes. AI-derived observations are labeled so they can be inspected later. Known sources continue to use their adapters: malformed known input returns an error instead of going to AI. Even an unfamiliar source needs an organization and identity policy, whether or not it needs a custom adapter.
 
-Malformed/schema-invalid model output gets one corrective retry with a bounded copy of the previous output and a validation hint. Provider envelope failures, truncation, and transport failures are returned directly rather than blindly retried. Persistent invalid output returns 502; provider unavailability/rate limiting returns 503; timeout returns 504. No data is written before validation succeeds. Tests use an injected mock client; the optional live provider smoke command is documented in the README. Record-scoping and explicit boolean checks strengthen evidence validation but do not prove every semantic association. Strict record-local evidence may reject ambiguous or mixed-style citations; correction requests consistent pointers or quotes.
+When the extracted output fails validation, the service gives the model one correction attempt. It includes a bounded copy of the previous output and a hint about the failure. Malformed provider responses, truncation, and connection failures return directly. Invalid output after correction returns 502; provider unavailability or rate limiting returns 503; a timeout returns 504. Nothing is saved until validation succeeds.
 
-Questions and source text are untrusted input, including any embedded instructions. Models receive neither credentials nor executable database tools. Extraction sees only the uploaded content needed for that request; the planner sees the question and allowed query vocabulary. Real inventory can contain personal or confidential data, so operator approval of provider/model data handling is a deployment concern. The prototype does not log complete payloads, prompts, or secrets by default.
+The correction hint depends on the evidence problem. If entities and their assignments are in separate JSON arrays, it explains how to cite an enclosing object for the record while keeping precise field pointers. If a person's facts are spread across several sentences, it asks for an exact passage containing all the field quotes. The revised output must pass the same checks. This can still reject an extraction that mixes quotation and pointer styles or associates facts incorrectly.
+
+Questions and uploads may contain instructions intended to influence the model. The model has no database tools and receives no credentials in its prompt. Extraction sends the uploaded content for that request; planning sends the question and supported query fields and relationships. Because uploads may contain personal or confidential information, a deployment needs an approved provider-data policy. The prototype does not log complete prompts, payloads, or secrets by default.
 
 ## 8. Natural-language querying
 
 `POST /ask` plans a question, resolves its references, and executes a validated database query. `POST /ask/plan` previews a plan without reading the database. The CLI executes questions by default; `--plan-only` requests a preview.
 
-A preview returns `executed: false` and one of three results: a versioned plan, an unsupported reason with example questions, or a request for clarification. The model can ask about unclear intent, but database lookup handles ambiguous names and candidate IDs later. Names, emails, hostnames, and UUIDs must come from the question. Pagination comes from the request. The service validates fields and relationship directions and allows one correction attempt for an invalid plan. These checks constrain the output, although they cannot guarantee that the model understood the question correctly.
+A preview returns `executed: false` with a plan, an unsupported reason and example questions, or a clarification question. The model can ask about unclear intent. Looking up ambiguous names and candidate IDs happens later, against the database. Names, emails, hostnames, and UUIDs in the plan must come from the question, and pagination comes from the request. Invalid fields or relationship directions get one correction attempt. These checks cannot guarantee the model understood the question.
 
-A question such as “Which devices belong to users without MFA?” describes a small relational query. **Query planning** translates that meaning into a constrained data structure: select devices, follow their assignee edge, and test MFA=false on that user. The application validates the structure and builds the database query itself.
+For “Which devices belong to users without MFA?”, a plan selects devices, follows each device's assignment, and checks whether that user has MFA=false. The model describes those steps in a constrained JSON structure. Application code validates it and builds the SQL query.
 
 ```mermaid
 flowchart LR
@@ -269,7 +275,7 @@ flowchart LR
   D --> A[Template answer with evidence limitations]
 ```
 
-The LLM never receives the entire CMDB, and arbitrary SQL is never accepted. Answer text is built deterministically from actual query results; a second narrative model call adds little value in this prototype.
+The model does not receive stored CMDB records or write SQL. Once the query finishes, application code builds the answer from the rows and count. A second model call to phrase that result would add cost without much benefit here.
 
 ### Limited plan schema
 
@@ -283,9 +289,9 @@ A version-1 executable plan has:
 | `exists`          | AND of related-entity constraints containing relation, direction (out/in), target_kind, where, and optional nested exists. |
 | `limit`, `offset` | Bounded list pagination. Count ignores pagination. Request envelope values override model proposals.                       |
 
-All models forbid extra fields. A registry permits fields by type: device hostname/os_family/status/encrypted; user name/email/team/status/mfa_enabled; application name/app_type/owner_team; plus exact ci_id for each type. Values must match field types. Unknown/conflicted values satisfy is_null and do not satisfy eq false.
+The schemas reject extra fields. A registry lists which fields can be queried for each type: hostname, OS family, status, and encryption for devices; name, email, team, status, and MFA for users; name, type, and owner team for applications. Each type also supports an exact `ci_id`. Values must have the right type. Missing and conflicted values match `is_null`, but never `eq false`.
 
-Plans allow at most two relationship hops, eight predicates per node, four related constraints per node, and twenty values in an in predicate. List limit is 1–100, default 50; offset is 0–10,000. No arbitrary projections, SQL fragments, aggregates beyond count, OR/NOT expressions, or transitive graph traversal are included. This is an intentionally small language whose behavior can be tested thoroughly.
+A plan can follow at most two relationship steps, with up to eight predicates and four related constraints at each node. An `in` predicate accepts up to twenty values. Lists default to 50 rows, allow 1–100, and accept offsets from 0 to 10,000. The language supports count but excludes arbitrary projections, SQL fragments, other aggregates, OR/NOT, and transitive traversal. Keeping this scope small makes its behavior easier to check.
 
 For a generic device/security question:
 
@@ -307,23 +313,29 @@ For a generic device/security question:
 }
 ```
 
-Every related constraint means **there exists one related entity satisfying all its predicates and nested constraints**. To also require that assignee to use an application, nest an outgoing uses constraint inside the same assigned_to constraint. Separate sibling constraints may match different entities; the planner must not use that structure when the question refers to the same person.
+Each related constraint must be satisfied by one related item. To require a device's assignee both to lack MFA and to use an app, put the app constraint inside that same assignee constraint. Two separate sibling constraints could match two different people, which would answer a different question.
 
-The compiler uses correlated EXISTS expressions and bound parameters against fixed SQLAlchemy models. Edge direction and target type are checked against the relationship registry. Counts count root CIs before pagination; EXISTS avoids duplicate rows from many relationships. Lists order by internal CI ID. Exact application name references go through configured aliases and database identifier lookup; multiple matches produce clarification rather than arbitrary selection.
+The compiler builds correlated EXISTS expressions with bound parameters and fixed SQLAlchemy models. It checks relationship direction and endpoint types against the registry. EXISTS prevents a CI with several matching relationships from appearing multiple times. Counts run before pagination; lists sort by CI ID. App names go through configured alias and identifier lookup, and multiple matches require clarification.
 
 ### Query execution and reference lookup
 
-The compiler uses SQLAlchemy Core aliases to query CI, subtype, and relationship tables. Aliases make it possible to distinguish two applications in a dependency query, or follow a path through different entity types. Writes still use the ORM. Before execution, the service validates the plan again and resolves its references. Counts, page results, and coverage warnings share one read transaction. The provider call finishes before the database session opens. Answer text summarizes the total and returned page without another model call.
+SQLAlchemy Core aliases distinguish the tables at different steps of a query, including two applications in a dependency query. Writes still use the ORM. Before running a query, the service validates the plan again and resolves its names and IDs. The provider call finishes before a database session opens. Count, page results, and coverage warnings then use one read transaction, and the answer summarizes those results.
 
-Literal names, hostnames, and emails match exact current attributes with SQLite ASCII case-insensitive equality. Non-ASCII characters retain exact matching semantics; full Unicode collation is deferred. Application-name lookup also checks canonical identifiers in configured app-name authorities using each source's normalization rules. Raw-name and alias matches are combined: if they identify different CIs, clarification is required. No fuzzy matches, cross-authority alias expansion, or identity merges occur. Unmatched references yield empty membership plus a missing-reference warning. For IN, known values still match and each missing value is disclosed. Lookup does not assume a unique name even when other predicates would narrow the eventual result.
+Names, hostnames, and emails must match current attributes exactly, apart from SQLite's ASCII case-insensitive comparison. Non-ASCII characters require an exact match; full Unicode collation is not implemented. Application lookup also checks canonical identifiers in configured name authorities using each source's normalization rules.
 
-The returned plan preserves the user's literal names; `resolved_references` separately records the internal ID chosen for each reference (null if missing). Ambiguity returns up to 20 candidates in UUID order and a full `candidate_total`; rephrase with a candidate's internal UUID. Execution also limits the whole plan to 100 distinct literal references. A plan over that limit returns unsupported rather than dropping conditions. The per-node limits still apply.
+If a literal name and an alias identify different CIs, the service asks for clarification. It does not try approximate matches, expand aliases across authorities, or merge items. Missing references produce an empty match and a warning. For `in`, known values can still match while missing values are reported individually. Lookup does not assume a name is unique just because another filter might later narrow the result.
 
-Coverage warnings count distinct reachable CIs along each path, applying ancestors' scalar filters but omitting sibling/descendant EXISTS and the current node's filters. This deliberately exposes evidence that would disappear under the requested filter; counts can overlap and are not additional matches. Unknown and explicitly conflicted queried attributes are disclosed separately. is_null intentionally selects unknowns, so it does not emit an unknown-field exclusion warning. Reference-only CIs and conflicting assignments are also disclosed. Unresolved relationship counts refer to retained observations, including repeated observations, not distinct real-world edges. Outgoing checks use reachable sources plus unlinked observations; incoming checks are organization-wide because unresolved targets cannot be attached to the query. Missing-edge checks are organization/type-wide. Every answer states that recorded evidence is not a complete live directory, and zero totals receive an explicit absence-of-evidence warning.
+The returned plan keeps the names as the user wrote them. `resolved_references` records the matching CI ID, or null when nothing matched. An ambiguous name returns up to 20 candidate IDs in UUID order and the full `candidate_total`; the user can ask again with an exact ID. A whole plan can contain at most 100 distinct literal references. Going over that limit returns unsupported rather than silently removing conditions, and the smaller per-node limits still apply.
 
-Coverage checks use SQL aggregates and follow the bounded plan rather than loading the database into memory. They flag known gaps; they cannot measure overall completeness or explain what caused a result. Reusing inventory projections keeps the response consistent with the inventory endpoints, though it adds ORM reads for each page. Queries do not acquire a write lock. If the database is busy, the API returns the same sanitized 503 response used elsewhere.
+Warnings help explain what a query could miss. Coverage checks follow each relationship path and count distinct CIs after applying ancestor filters. They omit the current node's filters and sibling or descendant EXISTS conditions, so they can reveal missing facts that the requested filter would otherwise hide. Warning counts can overlap; they are not extra result rows.
+
+Unknown and conflicted fields are reported separately. A query for `is_null` deliberately includes unavailable values, so it does not warn that those values were excluded. Other warnings flag reference-only items and conflicting assignments. Unresolved relationship counts describe stored observations, which may repeat the same real-world assertion. Outgoing checks include reachable source items and unlinked observations. Incoming checks cover the organization because an unresolved target cannot be attached to a query path. Missing-relationship checks cover the organization and endpoint type. Every answer notes that the database is not a complete live directory; zero matches also carry an absence-of-evidence warning.
+
+Coverage checks run SQL aggregates along the plan's bounded paths instead of loading the database into memory. They identify recorded gaps, but cannot measure overall completeness or prove why a result occurred. Query results reuse the inventory response format, which adds ORM reads for each page. Reads do not acquire a write lock. A busy database returns a sanitized 503.
 
 ### Coverage of required questions
+
+The compiler supports the plans below, and automated tests exercise them. The live model can still misinterpret a question or fail to produce a valid plan.
 
 | Question pattern                                             | Plan                                                                                         |
 | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
@@ -337,15 +349,15 @@ Coverage checks use SQL aggregates and follow the bounded plan rather than loadi
 
 ### Answers and limitations
 
-A supported plan returns rows or a count, the validated plan, and relevant limitations. An empty result means no matching recorded evidence; it does not prove the organization has no such real-world entities. At minimum, responses warn when predicates encounter NULL/conflicted fields, required relationships are unresolved in retained evidence, or the requested relationship type has no recorded edges. Initial coverage checks are bounded to the supported query patterns, not a universal completeness scoring system.
+An answered query returns matching rows or a count, the plan, and any relevant warnings. Zero matches means the stored data did not establish a match. Responses flag missing or conflicted fields, unresolved relationships, and relationship types with no recorded edges. These checks cover the supported queries; they do not score the completeness of an organization's inventory.
 
-If the question exceeds the language, the planner returns an explicit unsupported variant, with a reason and a supported example. If a name is ambiguous, the service returns clarification_required and candidate IDs. Neither case executes an approximate query. Still-invalid model plans return 502 after one repair attempt. Prompt injection cannot introduce tables, unrestricted traversal, or writes through the compiler.
+For a question outside the supported language, the planner returns `unsupported`, a reason, and suggested questions. An ambiguous database name returns `clarification_required` with candidate IDs. Invalid plans return 502 after one correction attempt. The compiler only accepts its fixed fields and operations, so instructions in a question cannot add tables, writes, or unrestricted traversal.
 
 ## 9. API design
 
-POST /ingest, POST /ingest/raw, GET /ingest/sources, and inventory GET endpoints are implemented. POST /ask/plan previews validated plans; POST /ask executes them and returns grounded answers.
+Uploads use `POST /ingest` or `POST /ingest/raw`. `GET /ingest/sources` lists the configured choices, and the inventory endpoints return saved items. `POST /ask/plan` previews a plan; `POST /ask` also runs it and returns the answer.
 
-All endpoints return JSON. List responses use `{data,total,limit,offset}` with stable ID ordering. Defaults are limit=50 and offset=0; maximums are 100 and 10,000. IDs are UUIDs, timestamps are UTC ISO 8601. No endpoint implicitly excludes inactive users or reference CIs.
+All responses are JSON. Lists use `{data,total,limit,offset}` and sort by ID, with defaults of 50 rows and offset 0. The maximum limit is 100 and maximum offset is 10,000. Item IDs are UUIDs and timestamps use UTC ISO 8601. Inactive users and reference CIs remain included unless a filter excludes them.
 
 | Endpoint         | Request                                                             | Success response                                                                                                         | Expected errors                                                                                                |
 | ---------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
@@ -357,7 +369,9 @@ All endpoints return JSON. List responses use `{data,total,limit,offset}` with s
 | `POST /ask/plan` | Question (1–2,000 characters), limit 1–100, offset 0–10,000.        | 200: executed=false, planner_version, result (planned/unsupported/clarification_required). No database access.           | 422 invalid request; 502 invalid model output; 503 unavailable; 504 timeout.                                   |
 | `POST /ask`      | Question (1–2,000 characters), limit, offset.                       | 200 answered, unsupported, or clarification_required response.                                                           | 422 invalid envelope; 502/503/504 AI failure; 503 DB busy.                                                     |
 
-Common CI fields are id, kind, display_name, is_reference, created_at, and updated_at. Each list item contains an `attributes` object for its subtype and a `has_conflicts` flag. Full raw observations are excluded from lists. Detail evidence includes source ID, run ID, observation ID, record path, reliable observation time if known, and selected/conflicting values. Detail returns at most 20 recent observation summaries with total count; raw evidence browsing is deferred. Edges are paginated independently, ordered by direction/type/edge ID. Application owner-team is an attribute; identified human owners are owned_by edges.
+Each item includes its ID, kind, display name, reference status, creation time, and update time. Type-specific fields sit in `attributes`, alongside a `has_conflicts` flag. Lists exclude raw source records. Details show source, run, and observation IDs; record paths; reliable observation times; and selected or conflicting values.
+
+The detail endpoint returns up to 20 recent observation summaries and their total count. Browsing full raw evidence is not implemented. Relationships have their own pagination and sort by direction, type, and edge ID. An application team owner is stored in `owner_team`; an identified person is connected by an `owned_by` relationship.
 
 Example ask request:
 
@@ -384,7 +398,7 @@ Illustrative response, with an example count rather than a fixture expectation:
 }
 ```
 
-List answers use data as an array of CI projections and also return limit/offset. Count returns data=null and total before pagination. Unsupported responses use `{status:"unsupported",reason,suggested_questions}`; clarification uses `{status:"clarification_required",question,candidates,candidate_total}`. Actual wire responses are valid JSON; these compact shapes describe their fields.
+For list questions, `data` contains CI records and the response includes pagination. For count questions, `data` is null and `total` gives the count before pagination. Unsupported responses contain `status`, `reason`, and `suggested_questions`. Clarification responses contain `status`, `question`, `candidates`, and `candidate_total`.
 
 All error responses share a shape, including FastAPI validation errors through an exception handler:
 
@@ -399,11 +413,11 @@ All error responses share a shape, including FastAPI validation errors through a
 }
 ```
 
-A keyless but otherwise valid record is quarantined; the validation error above instead describes a structurally invalid field. Unexpected failures return sanitized 500 without stack traces or raw provider responses. Identity/attribute conflicts discovered in valid records are processing warnings, not HTTP errors that discard their evidence. No merge, delete, reconciliation, or configuration-management API is planned.
+A structurally valid record with no usable identifier is saved as quarantined evidence. A malformed field, like the one in the error example, rejects the input instead. Unexpected failures return a sanitized 500 without stack traces or raw provider responses. Identity and attribute conflicts in valid records produce warnings so the evidence can be kept. The prototype has no merge, delete, reconciliation, or configuration-management API.
 
 ## 10. Sample Data and Integration Testing
 
-The supplied files are adapter fixtures and integration tests, not global identity or precedence rules. This section contains their source-specific interpretations. Tests reuse the unchanged files with separate source configuration. Synthetic fixtures exercise cases the supplied data does not contain.
+The original files are used unchanged in adapter and integration tests. Their filenames do not determine identity or which source wins a conflict; test configuration supplies those rules. Additional synthetic records cover cases missing from the originals.
 
 ### What each fixture exercises
 
@@ -415,39 +429,43 @@ The supplied files are adapter fixtures and integration tests, not global identi
 | `sample_okta.json`     | Array of nine users, each with user_id, name, email, groups, apps, mfa_enabled, last_login, status.                                                                                                                    | 25 access assignments to 15 distinct application labels. Carlos S., Michael Brown, and Alex Johnson explicitly lack MFA; Alex is suspended. No export time. Login does not timestamp the account record. Groups are not a single team.                                                                                                      |
 | `sample_app.json`      | inventory_metadata, six applications, summary. Common fields: app_id, name, vendor, app_type, category, deployment, owner, users_count, integrations, SSO. Optional costs/renewals or server location/version/contact. | Explicit export time. Six catalog apps and 16 directed integrations to 13 target labels. Owner values are teams, not people. Reported user totals are not observed Okta assignment counts. Self-hosted apps can run in AWS; vendor labels do not establish dependencies.                                                                    |
 
-YAML hardware users have emails [john.doe@example.com](mailto:john.doe@example.com), [jane.doe@example.com](mailto:jane.doe@example.com), and [sarah.chen@example.com](mailto:sarah.chen@example.com); similarly named Okta accounts use [john.d@example.com](mailto:john.d@example.com), [jane.d@example.com](mailto:jane.d@example.com), and [s.chen@example.com](mailto:s.chen@example.com). No supplied stable identifier bridges those pairs. The tests must preserve separate users rather than manufacture joins.
+The YAML hardware users have emails `john.doe@example.com`, `jane.doe@example.com`, and `sarah.chen@example.com`. The similarly named Okta users have `john.d@example.com`, `jane.d@example.com`, and `s.chen@example.com`. The files supply no shared stable ID for these pairs, so the tests keep them as separate users.
 
 ### Explicit test configuration
 
-The fixture configuration declares one organization and maps the three hardware exports' device IDs to a common inventory authority. This tests the assumption that their repeated IDs are from one inventory; core services do not infer that from filenames. Separate source instances select the appropriate adapters.
+The test configuration uses one organization and gives all three hardware exports a shared device-ID authority. This explicitly assumes their repeated device IDs describe the same inventory. Separate source instances still select each file's adapter. The resolver does not infer any of this from filenames.
 
-An optional alias-enabled test profile declares a shared application catalog-name authority, with GitHub → GitHub Enterprise and Salesforce → Salesforce CRM. These aliases represent reviewed fixture assumptions and live entirely in test configuration. Test an empty alias configuration too: cross-source labels remain separate unless their declared authority guarantees a match. No application-specific branch belongs in the resolver.
+The alias-enabled test profile shares an application name authority and maps GitHub to GitHub Enterprise and Salesforce to Salesforce CRM. These are explicit assumptions about the fixtures, kept in configuration. Another test runs without aliases to check that cross-source labels remain separate when no shared identity is configured.
 
-The baseline test profile designates **no attribute authority**. Only YAML and the app inventory have reliable snapshot timestamps; JSON and CSV hardware check-ins cannot substitute for them. Thus incomparable contradictory device statuses remain conflicted. With all three hardware files loaded, John's and Jane's status fields project to NULL, Sarah's active state agrees across sources, and the active-device count is **one with two conflicted statuses disclosed**. A timestamped observation cannot defeat an undated contradictory value under the baseline policy.
+The baseline profile gives no source priority over an attribute. Only the YAML and application exports have reliable snapshot times; hardware check-ins in JSON and CSV cannot stand in for those times. As a result, the contradictory statuses for John's and Jane's devices remain NULL. Sarah's active status agrees across sources. Loading all three hardware files therefore gives **one confirmed active device and two conflicting statuses**. A dated observation cannot automatically overrule an undated contradictory report.
 
-A separate test profile may designate the YAML source instance authoritative for device status and location. Under that configuration John's state is inactive and Jane/Sarah active, so the active count becomes two. This tests configured **source authority**, not YAML's file format. The same authority behavior must hold when a synthetic authoritative source supplies JSON or CSV.
+Another profile gives the YAML source priority for device status and location. With that policy, John's device is inactive and Jane's and Sarah's are active, giving a count of two. The test checks configured source trust, not a preference for YAML. Synthetic authoritative sources in JSON and CSV exercise the same rule.
 
 ### Expected integration outcomes
 
-With shared hardware authority and the alias-enabled profile, expect 3 devices, 12 users (9 Okta plus 3 hardware), and 28 applications including reference-only CIs. Expect 3 identified device assignments, 25 uses edges, and 16 directed integration edges. Name-only hardware assignment observations remain unresolved evidence and do not create extra users or replace identified assignments. There are no supported facts establishing dependency edges or human application owners.
+The shared hardware authority and app aliases produce 3 devices, 12 users (9 from Okta and 3 from hardware), and 28 applications including references. There are 3 identified device assignments, 25 user-to-app links, and 16 directed integrations. Name-only assignment observations remain unresolved and cannot replace identified assignees. The files do not establish dependencies or human application owners.
 
-Required ask tests include three MFA-false users, two macOS devices, five GitHub users, and the configured active-device result above. Device-to-MFA joins return no matches because the hardware users' MFA is unknown and their similarly named Okta counterparts are not merged. Responses must disclose the identity/MFA coverage gap. Dependency queries return no recorded edges and a missing-evidence notice; integrations cannot supply an answer to dependency questions.
+The question tests expect three users with MFA=false, two macOS devices, five GitHub users, and the active-device count for the selected policy. Device/MFA queries return no matches because the identified hardware users have unknown MFA and cannot be joined to the similarly named Okta users. Warnings explain that gap. Dependency queries also return no matches and warn that no dependencies are recorded; the integration links cannot answer that question.
 
-Test order independence, exact replay, equivalent reformatted uploads, reference enrichment, duplicate hostnames, conflicting device ID/serial matches, missing identifiers, and preserved conflicting values. Use synthetic records for positive two-hop MFA/app queries, dependencies, human ownership, and equal-time conflicts; the provided inputs cannot prove those paths work. Synthetic authority/freshness tests must also show that last_login, last_checkin, and arrival time never select a winner.
+Tests change upload order, repeat identical and reformatted content, and add details to reference items. They also cover duplicate hostnames, conflicting device IDs and serials, missing identifiers, and retained conflicting values. Synthetic data supplies positive two-hop queries, dependencies, human owners, and equal-time conflicts. Other checks confirm that login, check-in, and upload times cannot decide which report wins.
 
 <a id="phase-7-integration-verification-implemented"></a>
 
 ### Integration tests
 
-`tests/integration` adds 31 HTTP-level tests using disposable file-backed SQLite databases. The real application and OpenRouter client run with a mocked HTTP transport; unintended real HTTP fails immediately. No API key file is read and no external service is needed. Existing focused tests remain in place.
+The last full offline run passed 528 tests. All 51 deterministic files in the [test file list](../input_data/test_files/manifest.json) are tested through HTTP. Accepted uploads are saved and replayed; rejected uploads leave no partial records. Regression tests cover oversized integers, timestamp overflow, and the CSV node limit. The extraction and query validators also check the complete prompt examples.
 
-Three fixture orderings are compared with a baseline by stable identifiers, projected attributes, conflict states, reference status, and typed edges, ignoring generated UUIDs and timestamps. Each run mixes file uploads, pasted text, and legacy JSON envelopes, then replays the same content through different transports. All seven required questions are checked through the full provider-envelope/planner/executor/HTTP path, including unknown-MFA and missing-dependency disclosures. A separate profile disables aliases to verify they remain configuration rather than hardcoded product behavior.
+The 31 tests in `tests/integration` use temporary file-backed SQLite databases and the real application and provider client. A mocked HTTP transport supplies the model responses, and an unexpected network request fails the test. They need no API key or external service.
 
-A synthetic unfamiliar export covers all CI types and all five relationship types through real AI extraction/evidence validation, persistence, inventory/provenance inspection, planning previews, and grounded answers. Application restart tests reopen the same SQLite file with a new engine and app, preserving IDs and replay without another extraction call. Concurrent HTTP submissions through different transports commit one run. Actual SQLite write locking returns a retryable error and recovers after release.
+Three upload orders are compared against a baseline using stable identifiers, attributes, conflicts, reference status, and relationships. Generated UUIDs and timestamps are ignored. Each run mixes files, pasted text, and JSON envelopes, then repeats the content through different transports. All seven question patterns pass through the provider-response parser, planner, executor, and HTTP response. A separate run disables aliases to check that product-specific matching stays in configuration.
 
-Fault injection checks projection failures and a pre-commit failure after flush. Every table's stored values must remain identical to its pre-request snapshot; retries must succeed without a phantom replay. Identity conflicts and keyless records, by contrast, intentionally commit quarantine evidence alongside valid records. Provider timeouts, rate limiting, server errors, invalid envelopes, malformed model JSON, invented IDs, and unsafe plans preserve prior data and recover after the provider response is corrected. Common 404/413/415/422/500/502/503/504 responses verify correlation and sanitized error behavior across the suite.
+An unfamiliar synthetic export exercises all three CI types and five relationship types through extraction validation, saving, inventory reads, planning, and answers. Restart tests reopen the SQLite file and confirm that IDs and replay survive. Concurrent submissions through different transports commit one run. A real SQLite write lock produces a retryable error, and the request works again once the lock is released.
 
-The failure tests caught a missing `X-Request-ID` header on unhandled 500 responses. Those errors are rendered outside the correlation middleware's normal return path, so the shared error helper now adds the header directly. The integration suite uses mocked provider responses; it does not verify live model quality, process-level crash recovery, or behavior under load.
+Failure tests raise errors while selecting current values and just before commit, after the SQL flush. They compare every table with its earlier contents to check rollback, then retry to make sure the failed attempt was not recorded as a successful replay. Identity conflicts and records without keys are different: they intentionally save quarantine evidence alongside valid records.
+
+Provider tests cover timeouts, rate limiting, server errors, invalid response envelopes, malformed JSON, invented IDs, and unsafe plans. Existing data stays intact, and corrected responses let the request succeed. Error tests check 404, 413, 415, 422, 500, 502, 503, and 504 responses for request IDs and safe error messages.
+
+These tests caught a missing `X-Request-ID` header on unhandled 500 responses. Those responses are generated outside the middleware's normal return path, so the shared error helper now adds the header itself. The suite verifies backend behavior with mocked model responses. It does not measure live model quality, process-crash recovery, or performance under load.
 
 ## 11. Build phases and code organization
 
@@ -498,13 +516,18 @@ app/
   schemas/          # API, normalized records, query plans
   ingestion/        # service, normalization, source adapters
   identity/         # namespace construction, resolver, aliases
-  ai/               # OpenRouter client, extraction, planning prompts
-  querying/         # registry, compiler, answer templates
+  ai/               # OpenRouter client, extraction, evidence checks and prompts
+  querying/         # planner and prompts, registry, compiler, answers
+  reconciliation/   # source policy and conflict handling
 tests/
-  unit/
+  database/
+  ingestion/
+  phase3/           # identity, evidence, relationships and persistence
+  uploads/
+  planning/
+  querying/
   integration/
-  fixtures/         # synthetic inputs and fixture configuration
-input_data/         # supplied files, unchanged
+input_data/         # original samples and additional test inputs
 requirements.txt
 pytest.ini
 .env.example
@@ -513,11 +536,13 @@ README.md
 
 ### Running the demo
 
-`python -m app.demo` creates a temporary SQLite database, uploads the five supplied files through the API, inspects provenance, checks replay across upload formats, and asks the seven sample questions. It prints the actual JSON responses. The default run uses plans from `examples/demo_questions.json` through a mocked HTTP transport; validation and query execution still use the real services. The server's normal planner does not use those fixtures.
+`python -m app.demo` creates a temporary SQLite database, uploads the five supplied files through the API, inspects provenance, checks replay across upload formats, and asks the seven sample questions. It prints a short summary; add `--json` for the full API responses. The default run uses plans from `examples/demo_questions.json` through a mocked HTTP transport; validation and query execution still use the real services. The server's normal planner does not use those fixtures.
 
 Use `--live` to send the same questions to the configured provider. This can incur charges, and the demo fails if the answers differ from the fixture expectations. The offline run needs no key and leaves the application database alone. Both modes dispose of their engines and remove temporary files when they finish or fail.
 
 Selected offline responses are saved in [demo-output.json](demo-output.json). The [README](../README.md) has setup and verification commands. The [Codex session transcript](codex-session.md) records the development conversation.
+
+Live checks with the default model passed all ten structured unfamiliar fixtures and six of seven example questions in the full run. The two-hop question was inconsistent: it failed in the full run but produced a valid plan after correction in a later isolated check. The prose inventory fixture repeatedly failed evidence validation. These failures returned errors without saving invalid extraction output or executing invalid plans. Live model interpretation remains a limitation.
 
 The installed environment has been used for tests, database initialization, and the offline demo. A fresh dependency download and Python 3.12 run have not been verified. The separate live extraction checks described above should not be confused with the mocked demo results.
 

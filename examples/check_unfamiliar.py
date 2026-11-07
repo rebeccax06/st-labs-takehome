@@ -8,6 +8,8 @@ from app.config import Settings
 from app.main import create_app
 from app.db.session import create_sqlite_engine
 from app.ai.extraction import PROMPT_VERSION
+from app.ingestion.formats import recognized_adapter
+from app.ingestion.parsing import parse_content
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -29,6 +31,9 @@ def main():
             try:
                 with TestClient(create_app(settings=settings, sources=[], engine=engine), raise_server_exceptions=False) as client:
                     content = (ROOT / 'input_data/unfamiliar' / case['file']).read_bytes()
+                    document = parse_content(content.decode('utf-8'), case['format'])
+                    if recognized_adapter(document, case['format']) is not None:
+                        raise RuntimeError('Unfamiliar fixture unexpectedly matched a deterministic adapter')
                     response = client.post('/ingest', data={'source_id':'uploaded-data'}, files={'file':(case['file'],content)})
                     result = dict(file=case['file'], extraction_version=PROMPT_VERSION, model=settings.openrouter_model, http_status=response.status_code, ingestion=response.json())
                     if response.status_code == 200:
@@ -36,11 +41,24 @@ def main():
                         items = inventories[case['kind']]['data']
                         details = [client.get('/ci/'+item['id']).json() for page in inventories.values() for item in page['data']]
                         replay = client.post('/ingest',data={'source_id':'uploaded-data'},files={'file':(case['file'],content)})
-                        checks = dict(expected_entity=any(case['expected_name'] in json.dumps(item,ensure_ascii=False) for item in items),ai_provenance=any(observation['origin'] == 'ai' for detail in details for observation in detail['provenance']['data']),replay=replay.status_code==200 and replay.json().get('replayed') is True and replay.json().get('run_id') == response.json()['run_id'])
+                        checks = dict(unfamiliar_layout=True, expected_entity=any(case['expected_name'] == item['display_name'] for item in items),ai_provenance=any(observation['origin'] == 'ai' for detail in details for observation in detail['provenance']['data']),replay=replay.status_code==200 and replay.json().get('replayed') is True and replay.json().get('run_id') == response.json()['run_id'])
                         matching = [item for item in items if item['display_name'] == case['expected_name']]
                         checks['field_preservation'] = any(all(item['attributes'].get(key) == value for key,value in case.get('expected_attributes', {}).items()) for item in matching)
                         if case['kind'] == 'user' and 'mfa_enabled' not in case.get('expected_attributes', {}):
                             checks['missing_mfa_unknown'] = all(item['attributes'].get('mfa_enabled') is None for item in matching)
+                        for expected in case.get('expected_entities', []):
+                            checks['entity:' + expected['name']] = any(
+                                item['display_name'] == expected['name'] and all(
+                                    item['attributes'].get(key) == value for key, value in expected['attributes'].items())
+                                for item in inventories[expected['kind']]['data'])
+                        for expected in case.get('expected_relationships', []):
+                            targets = {item['id'] for page in inventories.values() for item in page['data']
+                                       if item['display_name'] == expected['target']}
+                            checks['relationship:' + expected['relation']] = any(
+                                edge['direction'] == 'out' and edge['relation_type'] == expected['relation']
+                                and edge['other_ci_id'] in targets
+                                for detail in details if detail['display_name'] == expected['source']
+                                for edge in detail['relationships']['data'])
                         result.update(inventory=inventories,details=details,checks=checks,passed=all(checks.values()))
                     else:
                         result['passed'] = False

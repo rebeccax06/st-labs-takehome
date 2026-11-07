@@ -51,7 +51,14 @@
     "expected_attributes": {
       "email": "developer@example.test",
       "mfa_enabled": false
-    }
+    },
+    "expected_relationships": [
+      {
+        "source": "Test Developer",
+        "relation": "uses",
+        "target": "GitHub"
+      }
+    ]
   },
   {
     "file": "jira_style.json",
@@ -60,7 +67,17 @@
     "format": "json",
     "expected_attributes": {
       "app_type": "saas"
-    }
+    },
+    "expected_entities": [
+      {
+        "kind": "user",
+        "name": "Test Project Lead",
+        "attributes": {
+          "email": "lead@example.test",
+          "mfa_enabled": null
+        }
+      }
+    ]
   },
   {
     "file": "salesforce_style.json",
@@ -70,7 +87,17 @@
     "expected_attributes": {
       "email": "sales@example.test",
       "status": "active"
-    }
+    },
+    "expected_entities": [
+      {
+        "kind": "application",
+        "name": "Salesforce",
+        "attributes": {
+          "app_type": "saas",
+          "reported_user_count": 1
+        }
+      }
+    ]
   },
   {
     "file": "workday_style.json",

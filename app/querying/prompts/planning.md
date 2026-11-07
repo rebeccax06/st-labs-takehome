@@ -23,3 +23,22 @@ Names below illustrate syntax, not special application rules.
 - Devices belonging to users without MFA who use GitHub: the same assigned_to user constraint includes nested out uses -> application where name eq GitHub.
 - Applications depending on Salesforce: application exists out depends_on -> application where name eq Salesforce. To find dependents starting from the target, use incoming.
 - How many active devices: count device where status eq active.
+
+# Counting hops
+Count edges along the longest relationship path from the root. Root predicates use zero hops; related-entity predicates do not add hops. A device -> assigned user query is ONE hop, even when filtering the user's MFA. Adding that user's application usage makes TWO hops. Both are supported. Never reject either pattern as exceeding the hop limit.
+
+# Complete one-hop response
+For “Which devices belong to users without MFA?”:
+
+```json
+{"result":{"status":"planned","plan":{"version":1,"operation":"list","root":"device","where":[],"exists":[{"relation":"assigned_to","direction":"out","target_kind":"user","where":[{"field":"mfa_enabled","operator":"eq","value":false}],"exists":[]}],"limit":50,"offset":0}}}
+```
+
+# Complete two-hop response
+For “Which devices belong to users without MFA who use Example Portal?”, the user filter and application usage are both supported. This is two relationship hops, not three: predicates do not add hops. The user's `where` and nested `exists` may appear together. Return a plan rather than unsupported:
+
+```json
+{"result":{"status":"planned","plan":{"version":1,"operation":"list","root":"device","where":[],"exists":[{"relation":"assigned_to","direction":"out","target_kind":"user","where":[{"field":"mfa_enabled","operator":"eq","value":false}],"exists":[{"relation":"uses","direction":"out","target_kind":"application","where":[{"field":"name","operator":"eq","value":"Example Portal"}],"exists":[]}]}],"limit":50,"offset":0}}}
+```
+
+Keep the actual application's literal name from the question. One assigned user must satisfy both conditions; do not split them across different users.

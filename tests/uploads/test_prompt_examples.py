@@ -119,3 +119,41 @@ def test_separate_assignment_table_uses_enclosing_scope_and_preserves_edge():
     assert "Set this record's evidence.pointer to '/'" in calls[1][-1]['content']
     assert result.batch.records[0].relationships[0].relation_type == 'uses'
     assert result.batch.records[0].relationships[0].target.identifiers[0].value == 'A-1'
+
+
+def test_complete_assignment_example_preserves_separate_entities_and_edge():
+    document = {"members": [{"id": "U-1", "name": "Morgan"}],
+                "application": {"id": "A-1", "name": "Portal"},
+                "assignments": [{"member_id": "U-1", "application_id": "A-1"}]}
+    example = re.findall(r"```json\n(.*?)\n```", SYSTEM, re.DOTALL)[2]
+    client = SimpleNamespace(settings=Settings(), complete=lambda **kwargs: example)
+    source = SourceConfig(organization_id="test", source_id="uploads", adapter="auto")
+    request = IngestRequest(organization_id="test", source_id="uploads", format="json",
+                            content=json.dumps(document))
+    result = Extractor(client).prepare(request, source, document)
+    assert [row.ci_type for row in result.batch.records] == ["user", "application"]
+    user, app = result.batch.records
+    assert user.identifiers[0].value == "U-1"
+    assert user.relationships[0].relation_type == "uses"
+    assert user.relationships[0].target.identifiers == app.identifiers
+
+
+def test_text_scope_correction_explains_facts_across_sentences():
+    content = 'Employee ID: EXAMPLE-101\nName: Example Person\nMFA: disabled'
+    output = json.loads(re.findall(r"```json\n(.*?)\n```", SYSTEM, re.DOTALL)[0])
+    output['records'][0]['evidence'] = {'quote': 'MFA: disabled'}
+    calls = []
+
+    def complete(**kwargs):
+        calls.append(kwargs['messages'][:])
+        if len(calls) == 2:
+            output['records'][0]['evidence'] = {'quote': content}
+        return json.dumps(output)
+
+    client = SimpleNamespace(settings=Settings(), complete=complete)
+    source = SourceConfig(organization_id='test', source_id='uploads', adapter='auto')
+    request = IngestRequest(organization_id='test', source_id='uploads', format='text', content=content)
+    result = Extractor(client).prepare(request, source, None)
+    assert len(result.batch.records) == 1
+    assert 'entire raw_input' in calls[1][-1]['content']
+    assert 'Do not reconstruct or paraphrase' in calls[1][-1]['content']

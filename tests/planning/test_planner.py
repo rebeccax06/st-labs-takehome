@@ -174,3 +174,17 @@ def test_real_client_request_uses_planner_schema_and_no_credentials_in_prompt():
     client = OpenRouterClient(Settings(openrouter_api_key="test-key-not-real"), transport=httpx.MockTransport(handler))
     result = QueryPlanner(client).plan(AskPlanRequest(question=CASES[0][0]))
     assert result.result.plan.where[0].value is False
+
+
+def test_complete_prompt_example_validates_same_user_two_hop_plan():
+    import re
+    from app.querying.prompts import SYSTEM
+
+    example = re.findall(r"```json\n(.*?)\n```", SYSTEM, re.DOTALL)[-1]
+    model = Model(example)
+    result = QueryPlanner(model).plan(AskPlanRequest(
+        question="Which devices belong to users without MFA who use Example Portal?"))
+    expected = plan("device", exists=[edge("assigned_to", "user",
+        where=[predicate("mfa_enabled", False)],
+        exists=[edge("uses", "application", where=[predicate("name", "Example Portal")])])])
+    assert result.result.plan.model_dump(mode="json") == expected

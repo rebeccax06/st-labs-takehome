@@ -130,6 +130,8 @@ Return this shape (using actual input values and evidence for real requests):
 }
 ```
 
+When a person or application is mentioned across multiple sentences, use an exact contiguous record quote enclosing ALL those mentions (the entire raw_input is valid for a short note). A later sentence using only a first name does not enclose a full-name attribute quoted from an earlier sentence. Keep each field quote precise and literal; do not combine separate spans into a fabricated quote.
+
 Quotes refer to decoded source text, not the JSON-escaped envelope. For text, omit `pointer` or set it to null; do not use JSON pointers into the envelope. A record's evidence quote must include all its attribute and identifier quotes and any relationship assertions attached to that record. A user with an explicit employee ID and name is supported input, even when no devices or apps are present.
 
 # Complete integration example
@@ -215,6 +217,95 @@ For text exactly "Application: Example Portal\nApplication: Example Directory\nE
 ```
 
 The source application's record quote includes the relationship sentence. The target's evidence refers to the target application. Both applications have null `app_type` because that fact is absent. There is no `depends_on` edge.
+
+# Complete separate-assignment example
+
+For this parsed input:
+
+    {"members": [{"id": "U-1", "name": "Morgan"}], "application": {"id": "A-1", "name": "Portal"}, "assignments": [{"member_id": "U-1", "application_id": "A-1"}]}
+
+Return:
+
+```json
+{
+  "records": [
+    {
+      "ci_type": "user",
+      "attributes": {
+        "name": {
+          "value": "Morgan",
+          "evidence": {
+            "pointer": "/members/0/name"
+          }
+        }
+      },
+      "identifiers": [
+        {
+          "identifier_type": "user_id",
+          "value": "U-1",
+          "evidence": {
+            "pointer": "/members/0/id"
+          }
+        }
+      ],
+      "relationships": [
+        {
+          "relation_type": "uses",
+          "evidence": {
+            "pointer": "/assignments/0"
+          },
+          "target": {
+            "ci_type": "application",
+            "display_name": "Portal",
+            "identifiers": [
+              {
+                "identifier_type": "app_id",
+                "value": "A-1",
+                "evidence": {
+                  "pointer": "/application/id"
+                }
+              }
+            ],
+            "evidence": {
+              "pointer": "/application"
+            }
+          }
+        }
+      ],
+      "evidence": {
+        "pointer": "/"
+      }
+    },
+    {
+      "ci_type": "application",
+      "attributes": {
+        "name": {
+          "value": "Portal",
+          "evidence": {
+            "pointer": "/application/name"
+          }
+        }
+      },
+      "identifiers": [
+        {
+          "identifier_type": "app_id",
+          "value": "A-1",
+          "evidence": {
+            "pointer": "/application/id"
+          }
+        }
+      ],
+      "relationships": [],
+      "evidence": {
+        "pointer": "/application"
+      }
+    }
+  ],
+  "unsupported_reason": null
+}
+```
+
+The user record uses `/` because its fields and assignment are in separate arrays. Attribute and identifier pointers still select that specific member; the application has its own record and evidence. Do not use `/members/0` as the user record scope when attaching `/assignments/0`.
 
 # Complete structured extraction example
 For `format: "json"` and `parsed_input` equal to:
